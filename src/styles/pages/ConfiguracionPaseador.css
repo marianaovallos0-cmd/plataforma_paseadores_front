@@ -1,0 +1,245 @@
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.config-paseador-container {
+  background-color: #EDEDED;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== CABECERA (reutilizada del dashboard) ===== */
+.dashboard-header {
+  background: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #333;
+}
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.user-avatar {
+  font-size: 2rem;
+  color: #5B3A8E;
+}
+.user-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ===== CONTENIDO PRINCIPAL ===== */
+.dashboard-main {
+  display: flex;
+  flex: 1;
+}
+.config-content {
+  flex: 1;
+  margin: 1.5rem;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  padding: 2rem;
+}
+
+/* ===== CABECERA DEL PERFIL (Título + botón editar) ===== */
+.perfil-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.75rem;
+}
+.perfil-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #000;
+}
+.btn-editar {
+  background-color: #5B3A8E;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-editar:hover {
+  background-color: #4a2e72;
+}
+
+/* ===== CUERPO EN MODO VISTA (dos columnas) ===== */
+.perfil-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 2rem;
+}
+/* Columna izquierda: avatar */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+.foto-grande {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #5B3A8E;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.foto-placeholder {
+  width: 150px;
+  height: 150px;
+  background: #e0e0e0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  border: 3px solid #ddd;
+}
+.btn-cambiar-foto {
+  background-color: #5B3A8E;
+  color: white;
+  border: none;
+  border-radius: 40px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: center;
+  display: inline-block;
+}
+.btn-cambiar-foto:hover {
+  background-color: #4a2e72;
+}
+
+/* Columna derecha: información */
+.info-section {
+  background: #fafafa;
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+}
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+.info-item label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.info-item .valor {
+  font-size: 1rem;
+  color: #000;
+  margin-top: 0.2rem;
+  word-break: break-word;
+}
+.estrellas {
+  display: inline-flex;
+  gap: 0.2rem;
+  font-size: 1.1rem;
+}
+.star.filled { color: #f5b042; }
+.star.empty { color: #ddd; }
+.acciones-secundarias {
+  grid-column: span 2;
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid #ddd;
+  padding-top: 1rem;
+}
+.btn-secundario {
+  background: transparent;
+  border: 1px solid #5B3A8E;
+  color: #5B3A8E;
+  border-radius: 40px;
+  padding: 0.3rem 1rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: 0.2s;
+}
+.btn-secundario:hover {
+  background: #f3eef8;
+}
+
+/* ===== MODO EDICIÓN ===== */
+.edit-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 2rem;
+}
+.edit-fields {
+  background: #fafafa;
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.edit-fields input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  outline: none;
+  transition: border 0.2s;
+  box-sizing: border-box;
+}
+.edit-fields input:focus {
+  border-color: #5B3A8E;
+}
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.btn-guardar {
+  background-color: #377046;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 40px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.btn-cancelar {
+  background: transparent;
+  border: 2px solid #dc3545;
+  color: #dc3545;
+  padding: 8px 22px;
+  border-radius: 40px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.error {
+  color: red;
+  font-size: 0.8rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+}

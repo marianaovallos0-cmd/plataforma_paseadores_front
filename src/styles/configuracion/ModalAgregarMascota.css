@@ -1,0 +1,124 @@
+/* ===== MODAL AGREGAR MASCOTA ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--border-radius-lg);
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #333;
+  text-align: center;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: var(--spacing-md);
+  margin-bottom: 0.3rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  box-sizing: border-box;
+  background-color: var(--bg-white);
+  color: var(--text-dark);
+  transition: border var(--transition-fast);
+}
+
+.modal-content input:focus,
+.modal-content select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.modal-content textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  background-color: var(--bg-white);
+  color: var(--text-dark);
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: var(--spacing-md);
+}
+
+.modal-content textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.modal-content textarea::placeholder {
+  color: #aaa;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.btn-cancelar {
+  background: transparent;
+  border: 2px solid #ccc;
+  padding: 8px 16px;
+  border-radius: 40px;
+  cursor: pointer;
+  color: #333;
+  transition: background var(--transition-fast);
+}
+
+.btn-cancelar:hover {
+  background: #f5f5f5;
+}
+
+.btn-enviar {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background var(--transition-fast);
+}
+
+.btn-enviar:hover {
+  background-color: var(--primary-dark);
+}
+
+.error-message {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.8rem;
+  text-align: left;
+}

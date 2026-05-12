@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+.registro-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url('/FondoDelta.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.registro-card {
+  background: white;
+  width: 480px;
+  max-width: 90%;
+  padding: 2rem;
+  border-radius: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.registro-card h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #000;
+  text-align: left;
+  margin-bottom: 1.8rem;
+}
+
+.profile-placeholder {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.profile-circle {
+  width: 80px;
+  height: 80px;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #888;
+  border: 1px solid #ddd;
+}
+
+.registro-card input {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 1rem;
+  border: 2px solid #000000;
+  border-radius: 12px;
+  font-size: 1rem;
+  background-color: white;
+  color: #000000;
+  outline: none;
+}
+
+.registro-card input::placeholder {
+  color: #555;
+}
+
+.btn-next {
+  width: 100%;
+  background-color: #5B3A8E;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.btn-back {
+  width: 100%;
+  background-color: transparent;
+  color: #5B3A8E;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 12px;
+  border: 2px solid #5B3A8E;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+/* ========== ESTILOS ADICIONALES PARA UBICACIÓN ========== */
+.campo-fijo label {
+  display: block;
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.campo-disabled {
+  background-color: #f0f0f0;
+  color: #333;
+  cursor: not-allowed;
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+}
+
+.direccion-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.via-grupo {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.via-grupo select {
+  flex: 2;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  background-color: white;
+}
+
+.via-grupo input {
+  flex: 1;
+}
+
+.letra-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.letra-grupo input {
+  flex: 0 0 auto;
+  width: 80px;
+}
+
+.letra-grupo input:first-of-type {
+  width: 60px;
+}
+
+.letra-grupo span {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #555;
+}
+
+@media (max-width: 600px) {
+  .via-grupo, .letra-grupo {
+    flex-wrap: wrap;
+  }
+  .letra-grupo input {
+    width: auto;
+    flex: 1;
+  }
+}

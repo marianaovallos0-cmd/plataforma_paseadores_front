@@ -1,0 +1,265 @@
+/* Fondo general */
+.config-container {
+  background-color: #EDEDED;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cabecera */
+.config-header {
+  background: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #333;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-avatar {
+  font-size: 2rem;
+  color: #5B3A8E;
+}
+
+.user-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Contenido principal */
+.config-main {
+  display: flex;
+  flex: 1;
+}
+
+.config-content {
+  flex: 1;
+  margin: 1.5rem;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Fila superior perfil */
+.config-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 1.5rem;
+}
+
+.perfil-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.perfil-foto {
+  background-color: #e0e0e0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.perfil-foto-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-datos h3 {
+  margin: 0;
+  color: #000;
+}
+
+.perfil-datos p {
+  margin: 0.3rem 0;
+  color: #333;
+}
+
+.perfil-datos .telefono {
+  color: #444;
+  font-size: 0.9rem;
+}
+
+.btn-editar {
+  background-color: #5B3A8E;
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+/* Filas media e inferior */
+.config-row-middle,
+.config-row-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.config-card {
+  background: #fafafa;
+  border-radius: 20px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  text-align: left;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #222;
+}
+
+.opciones-icon {
+  cursor: pointer;
+  color: #666;
+  font-size: 1.2rem;
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 0.6rem 1rem;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.item-info {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.item-info span {
+  color: #333;
+}
+
+.item-icon {
+  color: #5B3A8E;
+  font-size: 1.2rem;
+}
+
+.item-action {
+  cursor: pointer;
+  color: #888;
+}
+
+.item-action:hover {
+  color: #5B3A8E;
+}
+
+.btn-agregar {
+  background: transparent;
+  border: 1px dashed #5B3A8E;
+  color: #5B3A8E;
+  border-radius: 40px;
+  padding: 8px;
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-weight: bold;
+}
+
+.item-toggle {
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+
+.toggle-on {
+  color: #377046;
+  font-size: 1.6rem;
+}
+
+.toggle-off {
+  color: #ccc;
+  font-size: 1.6rem;
+}
+
+.notificaciones-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 0.8rem 1rem;
+  border-radius: 16px;
+}
+
+.seguridad-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  padding: 0.8rem 1rem;
+  border-radius: 16px;
+  margin-bottom: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.seguridad-item:hover {
+  background: #f0f0f0;
+}
+
+.seguridad-item .item-icon {
+  font-size: 1.2rem;
+}
+
+.seguridad-item span {
+  color: #333;
+}
