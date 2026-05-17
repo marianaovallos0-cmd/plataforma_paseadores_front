@@ -181,3 +181,18 @@ input:focus, select:focus {
   margin-bottom: 0.3rem;
   color: #5B3A8E;
 }
+
+.disponibilidad-simple {
+  text-align: left;
+  margin: 1rem 0;
+}
+.disponibilidad-simple label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+.disponibilidad-simple input {
+  width: auto;
+  margin: 0;
+}

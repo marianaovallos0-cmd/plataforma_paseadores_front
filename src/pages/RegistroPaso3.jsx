@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InputEdad from '../components/InputEdad';
-import { validarNombreMascota, validarRaza, validarEdadMascota, getErrorMessage } from '../utils/validaciones';
+import { validarNombreMascota, validarRaza, validarEdadMascota, validarObservaciones, getErrorMessage } from '../utils/validaciones';
 import { mostrarAlerta } from '../utils/alerts';
 import '../styles/pages/RegistroPaso3.css';
 
@@ -9,7 +9,7 @@ function RegistroPaso3() {
   const [mascotas, setMascotas] = useState([]);
   const [nombre, setNombre] = useState('');
   const [raza, setRaza] = useState('');
-  const [tamanio, setTamanio] = useState('');
+  const [peso, setPeso] = useState(''); // Cambio: tamaño -> peso
   const [edad, setEdad] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +17,9 @@ function RegistroPaso3() {
 
   useEffect(() => {
     const tempData = localStorage.getItem('tempRegistro');
-    if (!tempData) navigate('/registro/paso1');
+    if (!tempData) {
+      navigate('/registro/paso1');
+    }
   }, [navigate]);
 
   const agregarMascota = (e) => {
@@ -32,8 +34,8 @@ function RegistroPaso3() {
       setError(getErrorMessage('raza'));
       return;
     }
-    if (!tamanio) {
-      setError('Selecciona un tamaño');
+    if (!peso || isNaN(peso) || parseFloat(peso) <= 0) {
+      setError('Ingresa un peso válido (número positivo)');
       return;
     }
     const partes = edad.split(' ');
@@ -46,19 +48,23 @@ function RegistroPaso3() {
       setError(getErrorMessage('edadMascota'));
       return;
     }
+    if (!validarObservaciones(observaciones)) {
+      setError(getErrorMessage('observaciones'));
+      return;
+    }
 
     const nuevaMascota = {
       id: Date.now(),
       nombre: nombre.trim(),
       raza: raza.trim(),
-      tamanio,
+      peso: parseFloat(peso),
       edad: edad.trim(),
       observaciones: observaciones.trim() || '',
     };
     setMascotas([...mascotas, nuevaMascota]);
     setNombre('');
     setRaza('');
-    setTamanio('');
+    setPeso('');
     setEdad('');
     setObservaciones('');
   };
@@ -89,16 +95,11 @@ function RegistroPaso3() {
         <h2>MASCOTAS</h2>
         <div className="profile-placeholder"><div className="profile-circle">🐕</div></div>
         <form onSubmit={agregarMascota} className="mascota-form">
-          <input type="text" placeholder="Nombre del perro (ej: Max)" maxLength="50" value={nombre} onChange={e => setNombre(e.target.value)} />
-          <input type="text" placeholder="Raza (ej: Golden Retriever)" maxLength="50" value={raza} onChange={e => setRaza(e.target.value)} />
-          <select value={tamanio} onChange={e => setTamanio(e.target.value)}>
-            <option value="">Selecciona tamaño</option>
-            <option value="Pequeño">Pequeño</option>
-            <option value="Mediano">Mediano</option>
-            <option value="Grande">Grande</option>
-          </select>
+          <input type="text" maxLength="50" placeholder="Nombre del perro (ej: Max)" value={nombre} onChange={e => setNombre(e.target.value)} />
+          <input type="text" maxLength="50" placeholder="Raza (ej: Golden Retriever)" value={raza} onChange={e => setRaza(e.target.value)} />
+          <input type="number" step="0.1" min="0.1" placeholder="Peso (kg)" value={peso} onChange={e => setPeso(e.target.value)} />
           <InputEdad value={edad} onChange={(e) => setEdad(e.target.value)} error={error && error.includes('edad') ? error : ''} />
-          <textarea placeholder="Observaciones médicas (opcional)" maxLength="500" rows="2" value={observaciones} onChange={e => setObservaciones(e.target.value)} />
+          <input type="text" maxLength="500" placeholder="Observaciones médicas (opcional)" value={observaciones} onChange={e => setObservaciones(e.target.value)} />
           <button type="submit" className="btn-add">+ Agregar Mascota</button>
         </form>
         {error && <p className="error-message">{error}</p>}
@@ -107,7 +108,10 @@ function RegistroPaso3() {
             <h3>Tus mascotas:</h3>
             {mascotas.map(m => (
               <div key={m.id} className="mascota-item">
-                <div><strong>{m.nombre}</strong> - {m.raza} ({m.tamanio}) - {m.edad}{m.observaciones && <p className="obs">📝 {m.observaciones}</p>}</div>
+                <div>
+                  <strong>{m.nombre}</strong> - {m.raza} ({m.peso} kg) - {m.edad}
+                  {m.observaciones && <p className="obs">📝 {m.observaciones}</p>}
+                </div>
                 <button type="button" onClick={() => eliminarMascota(m.id)} className="btn-remove">Eliminar</button>
               </div>
             ))}

@@ -139,3 +139,68 @@
 .btn-aceptar { background: #377046; color: white; }
 .btn-rechazar { background: #dc3545; color: white; }
 .empty-card { background: #fafafa; border-radius: 20px; padding: 2rem; text-align: center; color: #888; }
+
+/* ===== DISPONIBILIDAD ===== */
+.disponibilidad-card {
+  background: white;
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+}
+
+.disponibilidad-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.estado-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.estado-valor {
+  font-weight: bold;
+  padding: 0.3rem 0.8rem;
+  border-radius: 40px;
+  font-size: 0.9rem;
+}
+
+.estado-valor.disponible {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.estado-valor.ocupado {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.btn-toggle {
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  border-radius: 40px;
+  padding: 0.4rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.btn-toggle:hover {
+  background: var(--primary-light);
+}
+
+.toggle-on, .toggle-off {
+  font-size: 1.4rem;
+}

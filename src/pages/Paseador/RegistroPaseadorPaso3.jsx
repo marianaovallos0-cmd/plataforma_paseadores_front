@@ -20,21 +20,23 @@ function RegistroPaseadorPaso3() {
   const handleFinalizar = () => {
     if (!userData) return;
 
-    // Codificar contraseña
+    // Codificar contraseña antes de guardar
     const passwordEncoded = btoa(userData.password);
     const { password, ...resto } = userData;
 
     const nuevoPaseador = {
       id: Date.now(),
       ...resto,
-      password: passwordEncoded,
+      password: passwordEncoded,   // <-- guardamos la contraseña codificada
       fotoPerfil: '',
       calificacionPromedio: 0,
       fechaRegistro: new Date().toISOString(),
       rol: 'paseador',
+      disponible: userData.disponible ?? true,
     };
 
     savePaseador(nuevoPaseador);
+    // Para la sesión, quitamos la contraseña
     const { password: _, ...paseadorSinPassword } = nuevoPaseador;
     setSesionActual(paseadorSinPassword);
 
@@ -55,12 +57,10 @@ function RegistroPaseadorPaso3() {
           <p><strong>Correo:</strong> {userData.correo}</p>
           <p><strong>Teléfono:</strong> {userData.telefono}</p>
           <h3>Ubicación</h3>
-          <p><strong>Ciudad:</strong> {userData.ciudad}</p>
+          <p><strong>Ciudad:</strong> {userData.ciudad || 'Bogotá'}</p>
           <p><strong>Barrio:</strong> {userData.barrio}</p>
           <h3>Disponibilidad</h3>
-          {userData.disponibilidad.map((d, i) => (
-            <p key={i}>{d.dia}: {d.horaInicio} - {d.horaFin}</p>
-          ))}
+          <p>Estado: <strong>{userData.disponible ? '🟢 Disponible' : '🔴 Ocupado'}</strong></p>
         </div>
         {error && <p className="error-message">{error}</p>}
         <button onClick={handleFinalizar} className="btn-finish">Finalizar</button>

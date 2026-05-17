@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaCalendarCheck, FaClock, FaDog, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaCalendarCheck, FaClock, FaDog, FaMapMarkerAlt, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import MenuLateral from '../../components/MenuLateral';
 import { useAuth } from '../../context/AuthContext';
-import { getSolicitudes, updateSolicitud } from '../../services/api';
+import { getSolicitudes, updateSolicitud, updatePaseador, setSesionActual } from '../../services/api';
 import { ESTADOS_SOLICITUD } from '../../constants';
 import { mostrarAlerta, confirmarAccion } from '../../utils/alerts';
 import '../../styles/pages/DashboardPaseador.css';
 
 function DashboardPaseador() {
-  const { user: paseador, loading } = useAuth();
+  const { user: paseador, loading, login } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(true);
   const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
   const [paseosActivos, setPaseosActivos] = useState([]);
+  const [disponible, setDisponible] = useState(paseador?.disponible ?? true);
   const navigate = useNavigate();
 
   const cargarSolicitudes = () => {
@@ -25,16 +26,37 @@ function DashboardPaseador() {
   };
 
   useEffect(() => {
-    if (!loading && !paseador) {
+    if (!paseador) {
       navigate('/');
       return;
     }
-    if (paseador) {
-      cargarSolicitudes();
+    cargarSolicitudes();
+  }, [paseador]);
+
+  // Cambiar disponibilidad y guardar en localStorage
+  const toggleDisponibilidad = async () => {
+    const nuevoEstado = !disponible;
+    const actionText = nuevoEstado ? 'disponible' : 'ocupado';
+    const confirmed = await confirmarAccion(
+      `Cambiar a ${actionText}`,
+      `¿Estás seguro de que quieres marcarte como ${actionText}?`
+    );
+    if (confirmed) {
+      setDisponible(nuevoEstado);
+      // Actualizar en el objeto paseador (localStorage)
+      const updatedPaseador = { ...paseador, disponible: nuevoEstado };
+      updatePaseador(paseador.id, updatedPaseador);
+      setSesionActual(updatedPaseador);
+      login(updatedPaseador);
+      mostrarAlerta('Estado actualizado', `Ahora estás ${actionText}`, 'success');
     }
-  }, [paseador, loading, navigate]);
+  };
 
   const aceptarSolicitud = async (id) => {
+    if (!disponible) {
+      mostrarAlerta('No disponible', 'No puedes aceptar solicitudes si estás ocupado', 'warning');
+      return;
+    }
     const confirmed = await confirmarAccion('Aceptar solicitud', '¿Aceptar este paseo?');
     if (confirmed) {
       updateSolicitud(id, { estado: ESTADOS_SOLICITUD.ACEPTADA, idPaseador: paseador.id });
@@ -60,14 +82,30 @@ function DashboardPaseador() {
     <div className="dashboard-paseador-container">
       <div className="dashboard-header">
         <button className="menu-toggle" onClick={toggleMenu}><FaBars /></button>
-        <div className="user-info">
-          <span>{paseador.nombreCompleto}</span>
-          {paseador.fotoPerfil ? <img src={paseador.fotoPerfil} alt="perfil" className="user-avatar-img" /> : <FaUserCircle className="user-avatar" />}
+        <div className="header-right">
+          <div className="user-info">
+            <span>{paseador.nombreCompleto}</span>
+            {paseador.fotoPerfil ? <img src={paseador.fotoPerfil} alt="perfil" className="user-avatar-img" /> : <FaUserCircle className="user-avatar" />}
+          </div>
         </div>
       </div>
       <div className="dashboard-main">
         <MenuLateral menuAbierto={menuAbierto} />
         <div className="dashboard-content">
+          {/* Estado de disponibilidad */}
+          <div className="disponibilidad-card">
+            <div className="disponibilidad-info">
+              <span className="estado-label">Estado actual:</span>
+              <span className={`estado-valor ${disponible ? 'disponible' : 'ocupado'}`}>
+                {disponible ? '🟢 Disponible' : '🔴 Ocupado'}
+              </span>
+            </div>
+            <button className="btn-toggle" onClick={toggleDisponibilidad}>
+              {disponible ? <FaToggleOn className="toggle-on" /> : <FaToggleOff className="toggle-off" />}
+              {disponible ? 'Marcarse como ocupado' : 'Marcarse como disponible'}
+            </button>
+          </div>
+
           <div className="seccion">
             <h2><FaDog /> Solicitudes pendientes</h2>
             {solicitudesPendientes.length === 0 ? <div className="empty-card">No hay solicitudes pendientes</div> :
@@ -78,7 +116,7 @@ function DashboardPaseador() {
                     <div className="card-info">
                       <p><FaCalendarCheck /> {new Date(s.fecha).toLocaleDateString('es-ES')}</p>
                       <p><FaClock /> {s.hora}</p>
-                      <p><FaMapMarkerAlt /> Punto de encuentro: (simulado)</p>
+                      <p><FaMapMarkerAlt /> {s.puntoEncuentro || 'Punto de encuentro no especificado'}</p>
                     </div>
                     <div className="card-actions">
                       <button className="btn-aceptar" onClick={() => aceptarSolicitud(s.id)}>Aceptar</button>
@@ -89,6 +127,7 @@ function DashboardPaseador() {
               </div>
             }
           </div>
+
           <div className="seccion">
             <h2><FaCalendarCheck /> Mis próximos paseos</h2>
             {paseosActivos.length === 0 ? <div className="empty-card">No tienes paseos activos</div> :

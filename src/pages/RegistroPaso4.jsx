@@ -65,7 +65,7 @@ function RegistroPaso4() {
           <h3>Mascotas</h3>
           {userData.mascotas.map(m => (
             <div key={m.id} className="resumen-mascota">
-              <p><strong>{m.nombre}</strong> - {m.raza} ({m.tamanio}) - {m.edad}</p>
+              <p><strong>{m.nombre}</strong> - {m.raza} ({m.peso} kg) - {m.edad}</p>
               {m.observaciones && <p>📝 {m.observaciones}</p>}
             </div>
           ))}

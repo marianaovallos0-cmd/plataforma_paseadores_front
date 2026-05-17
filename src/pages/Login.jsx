@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUsuarios, getPaseadores, setSesionActual } from '../services/api';
 import { ROLES } from '../constants';
-import { mostrarAlerta } from '../utils/alerts';
 import '../styles/pages/Login.css';
 
 function Login() {
@@ -30,12 +29,12 @@ function Login() {
       return;
     }
 
-    // Codificar la contraseña ingresada para comparar
+    // Codificar la contraseña ingresada a Base64 para comparar
     const passwordEncoded = btoa(password);
     const encontrado = usuarios.find(u => u.correo === email.trim() && u.password === passwordEncoded);
 
     if (encontrado) {
-      // Eliminar la contraseña antes de guardar en sesión
+      // Quitar la contraseña antes de guardar en sesión
       const { password: _, ...usuarioSinPassword } = encontrado;
       const sesion = { ...usuarioSinPassword, rol };
 

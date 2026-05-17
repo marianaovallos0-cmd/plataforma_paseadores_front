@@ -119,7 +119,9 @@ function Dashboard() {
                   {usuario.mascotas?.map(perro => (
                     <div key={perro.id} className={`perro-card ${perroSeleccionado?.id === perro.id ? 'selected' : ''}`} onClick={() => setPerroSeleccionado(perro)}>
                       <div className="perro-foto">🐕</div>
-                      <div className="perro-nombre">{perro.nombre}</div>
+                      <div className="perro-info">
+                        <div className="perro-nombre">{perro.nombre}</div>
+                      </div>
                     </div>
                   ))}
                   {!usuario.mascotas?.length && <p>No tienes perros registrados.</p>}

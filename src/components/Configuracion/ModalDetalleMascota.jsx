@@ -1,4 +1,4 @@
-import '../../styles/configuracion/ModalDetalleMascota.css';
+import '../../styles/Configuracion/ModalDetalleMascota.css';
 
 function ModalDetalleMascota({ isOpen, onClose, mascota }) {
   if (!isOpen || !mascota) return null;
@@ -12,7 +12,7 @@ function ModalDetalleMascota({ isOpen, onClose, mascota }) {
           <div className="detalle-info">
             <p><strong>Nombre:</strong> {mascota.nombre}</p>
             <p><strong>Raza:</strong> {mascota.raza}</p>
-            <p><strong>Tamaño:</strong> {mascota.tamanio}</p>
+            <p><strong>Peso:</strong> {mascota.peso} kg</p>  {/* Cambiado de tamaño a peso */}
             <p><strong>Edad:</strong> {mascota.edad}</p>
             <p><strong>Observaciones médicas:</strong> {mascota.observaciones || 'Ninguna'}</p>
           </div>
