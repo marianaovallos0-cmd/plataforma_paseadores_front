@@ -16,30 +16,13 @@ import DashboardPaseador from './pages/Paseador/DashboardPaseador';
 import HorariosPaseador from './pages/Paseador/HorariosPaseador';
 import HistorialPaseador from './pages/Paseador/HistorialPaseador';
 import ConfiguracionPaseador from './pages/Paseador/ConfiguracionPaseador';
+import AppRouter from './core/router';
 
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/registro/paso1" element={<RegistroPaso1 />} />
-        <Route path="/registro/ubicacion" element={<RegistroPaso2 />} />
-        <Route path="/registro/mascotas" element={<RegistroPaso3 />} />
-        <Route path="/registro/confirmacion" element={<RegistroPaso4 />} />
-        <Route path="/configuracion" element={<Configuracion />} />   {/* ← nueva */}
-        <Route path="/pagos" element={<Pagos />} />
-        <Route path="/historial" element={<MiHistorial />} />
-        <Route path="/solicitar-paseo" element={<SolicitarPaseo />} />
-        <Route path="/registro-paseador/paso1" element={<RegistroPaseadorPaso1 />} />
-        <Route path="/registro-paseador/paso2" element={<RegistroPaseadorPaso2 />} />
-        <Route path="/registro-paseador/paso3" element={<RegistroPaseadorPaso3 />} />
-        <Route path="/dashboard-paseador" element={<DashboardPaseador />} />
-        <Route path="/horarios-paseador" element={<HorariosPaseador />} />
-        <Route path="/historial-paseador" element={<HistorialPaseador />} />
-        <Route path="/configuracion-paseador" element={<ConfiguracionPaseador />} />
-      </Routes>
+      <AppRouter/>
     </BrowserRouter>
   );
 }
