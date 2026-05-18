@@ -109,7 +109,7 @@ function Dashboard() {
           <div className="content-grid">
             <div className="col-left">
               <div className="section-welcome">
-                <h2>Hola, {usuario.nombreCompleto.split(' ')[0]} 👋</h2>
+                <h2>Hola, {usuario.primerNombre.split(' ')[0]} 👋</h2>
                 <p>¿Listo(a) para pasear a <strong>{perroSeleccionado ? perroSeleccionado.nombre : 'tu perro'}</strong>?</p>
                 <button className="btn-solicitar" onClick={handleSolicitarPaseo}><FaPaw color="white" /> Solicitar Paseo</button>
               </div>

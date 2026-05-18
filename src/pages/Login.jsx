@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROLES } from '../constants';
 import '../styles/pages/Login.css';
+import { setSesionActual } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -11,6 +13,7 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,6 +37,11 @@ function Login() {
         setError(`No hay ${hasRole ? 'dueños' : 'paseadores'} registrados. Crea una cuenta primero.`);
         return;
       }
+
+      const sesion = { ...user, roles: user.roles };
+
+      setSesionActual(sesion);
+      login(sesion);
 
       navigate(hasRole ? '/dashboard' : '/dashboard-paseador');
     } catch (error) {
