@@ -1,9 +1,10 @@
+import authApi from '@/core/infrastructure/api/auth.api';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { getUsuarios, getPaseadores, setSesionActual } from '../services/api';
 import { ROLES } from '../constants';
 import '../styles/pages/Login.css';
+import { setSesionActual } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -11,9 +12,10 @@ function Login() {
   const [rol, setRol] = useState(ROLES.DUENO);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -22,28 +24,31 @@ function Login() {
       return;
     }
 
-    const usuarios = rol === ROLES.DUENO ? getUsuarios() : getPaseadores();
+    try {
+      setLoading(true)
 
-    if (usuarios.length === 0) {
-      setError(`No hay ${rol === ROLES.DUENO ? 'dueños' : 'paseadores'} registrados. Crea una cuenta primero.`);
-      return;
-    }
+      const data = await authApi.login({email, password})
+      localStorage.setItem('token', data.token);
 
-    // Codificar la contraseña ingresada a Base64 para comparar
-    const passwordEncoded = btoa(password);
-    const encontrado = usuarios.find(u => u.correo === email.trim() && u.password === passwordEncoded);
+      const user = data.usuario
+      const hasRole = user.roles.some(rol => rol.idRol === ROLES.DUENO ) 
 
-    if (encontrado) {
-      // Quitar la contraseña antes de guardar en sesión
-      const { password: _, ...usuarioSinPassword } = encontrado;
-      const sesion = { ...usuarioSinPassword, rol };
+      if (user.roles.length === 0) {
+        setError(`No hay ${hasRole ? 'dueños' : 'paseadores'} registrados. Crea una cuenta primero.`);
+        return;
+      }
+
+      const sesion = { ...user, roles: user.roles };
 
       setSesionActual(sesion);
       login(sesion);
 
-      navigate(rol === ROLES.DUENO ? '/dashboard' : '/dashboard-paseador');
-    } else {
-      setError('Correo o contraseña incorrectos');
+      navigate(hasRole ? '/dashboard' : '/dashboard-paseador');
+    } catch (error) {
+      const errorCustom = error
+      setError(errorCustom.message);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -1,4 +1,4 @@
-export const ROLES = { DUENO: 'dueno', PASEADOR: 'paseador' };
+export const ROLES = { ADMIN: 1, PASEADOR: 2, DUENO: 3 };
 export const ESTADOS_SOLICITUD = {
   PENDIENTE: 'pendiente', ACEPTADA: 'aceptada', RECHAZADA: 'rechazada', CANCELADA: 'cancelada', FINALIZADA: 'finalizada'
 };

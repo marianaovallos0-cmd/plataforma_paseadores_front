@@ -1,0 +1,1 @@
+export type BasicStatus = "ACTIVE" | "INACTIVE"
