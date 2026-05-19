@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import { saveSolicitud } from '../services/api';
 import { PRECIOS, ESTADOS_SOLICITUD } from '../constants';
 import { mostrarAlerta } from '../utils/alerts';
+import petApi from '@/core/infrastructure/api/pet.api';
+import direccionApi from '@/core/infrastructure/api/direccion.api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
@@ -16,15 +18,13 @@ import '../styles/pages/SolicitarPaseo.css';
 function SolicitarPaseo() {
   const { user: usuario, loading } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(true);
+  const [mascotas, setMascotas] = useState([]);
   const [mascotasSeleccionadas, setMascotasSeleccionadas] = useState([]);
   const [tipoServicio, setTipoServicio] = useState('1h');
   const [fecha, setFecha] = useState(new Date());
-
-  // Nuevo estado para la hora (con máscara HH:MM)
-  const [hora, setHora] = useState('03:00');
-  const [periodo, setPeriodo] = useState('PM');
-
+  const [hora, setHora] = useState('15:00');
   const [puntoEncuentro, setPuntoEncuentro] = useState('');
+  const [cargandoMascotas, setCargandoMascotas] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,14 +33,33 @@ function SolicitarPaseo() {
     }
   }, [usuario, loading, navigate]);
 
+  // Cargar mascotas y dirección del dueño
   useEffect(() => {
-    if (usuario && usuario.direccion) {
-      setPuntoEncuentro(usuario.direccion);
-    }
+    if (!usuario) return;
+
+    const cargarDatos = async () => {
+      try {
+        // Cargar mascotas
+        setCargandoMascotas(true);
+        const pets = await petApi.getPetsByOwner(usuario.idUsuario);
+        setMascotas(pets);
+        
+        // Cargar dirección principal
+        const direcciones = await direccionApi.findByUserId(usuario.idUsuario);
+        if (direcciones && direcciones.length > 0) {
+          const dir = direcciones[0];
+          setPuntoEncuentro(`${dir.detalle}, ${dir.barrio}, ${dir.ciudad}`);
+        }
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+      } finally {
+        setCargandoMascotas(false);
+      }
+    };
+    cargarDatos();
   }, [usuario]);
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-
   const handleMascotaChange = (id) => {
     if (mascotasSeleccionadas.includes(id))
       setMascotasSeleccionadas(mascotasSeleccionadas.filter(i => i !== id));
@@ -48,33 +67,11 @@ function SolicitarPaseo() {
       setMascotasSeleccionadas([...mascotasSeleccionadas, id]);
   };
 
-  // Máscara de hora HH:MM
-  const handleHoraChange = (value) => {
-    let limpio = value.replace(/\D/g, '');
-    limpio = limpio.slice(0, 4);
-
-    let formateado = '';
-    if (limpio.length >= 1) formateado = limpio.slice(0, 2);
-    if (limpio.length >= 3) formateado += ':' + limpio.slice(2, 4);
-
-    setHora(formateado);
-  };
-
-  // Convierte a formato 24h para guardar
-  const convertirA24h = (horaStr, periodoStr) => {
-    let [h, m] = horaStr.split(':');
-    if (!h || !m) return null;
-    h = parseInt(h, 10);
-    if (periodoStr === 'PM' && h !== 12) h += 12;
-    if (periodoStr === 'AM' && h === 12) h = 0;
-    return `${h.toString().padStart(2, '0')}:${m}`;
-  };
-
   const cantidad = mascotasSeleccionadas.length;
   const total = (tipoServicio === '1h' ? PRECIOS.PASEO_1H : PRECIOS.PASEO_30MIN) * cantidad;
-  const mascotasObjs = usuario?.mascotas?.filter(m => mascotasSeleccionadas.includes(m.id)) || [];
+  const mascotasObjs = mascotas.filter(m => mascotasSeleccionadas.includes(m.idPerro));
 
-  const handleConfirmar = async () => {
+  const handleConfirmar = () => {
     if (cantidad === 0) {
       mostrarAlerta('Atención', 'Selecciona al menos una mascota', 'warning');
       return;
@@ -83,22 +80,15 @@ function SolicitarPaseo() {
       mostrarAlerta('Atención', 'El punto de encuentro es obligatorio', 'warning');
       return;
     }
-
-    const hora24 = convertirA24h(hora, periodo);
-    if (!hora24) {
-      mostrarAlerta('Error', 'Hora inválida', 'warning');
-      return;
-    }
-
     const fechaISO = fecha.toISOString().split('T')[0];
     const nuevaSolicitud = {
       id: Date.now(),
-      idDueño: usuario.id,
+      idDueño: usuario.idUsuario,
       mascotas: mascotasObjs,
       tipoServicio,
       fecha: fechaISO,
-      hora: hora24,
-      fechaHora: new Date(`${fechaISO}T${hora24}`).toISOString(),
+      hora,
+      fechaHora: new Date(`${fechaISO}T${hora}`).toISOString(),
       puntoEncuentro: puntoEncuentro.trim(),
       precioTotal: total,
       estado: ESTADOS_SOLICITUD.PENDIENTE,
@@ -110,7 +100,7 @@ function SolicitarPaseo() {
     navigate('/dashboard');
   };
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading || cargandoMascotas) return <div>Cargando...</div>;
   if (!usuario) return null;
 
   return (
@@ -119,7 +109,7 @@ function SolicitarPaseo() {
         <button className="menu-toggle" onClick={toggleMenu}><FaBars /></button>
         <div className="header-right">
           <div className="user-info">
-            <span>{usuario.nombreCompleto}</span>
+            <span>{usuario.primerNombre} {usuario.primerApellido}</span>
             {usuario.fotoPerfil ? <img src={usuario.fotoPerfil} alt="foto" className="user-avatar-img" /> : <FaUserCircle className="user-avatar" />}
           </div>
         </div>
@@ -131,23 +121,25 @@ function SolicitarPaseo() {
             <div className="form-header"><FaPaw className="form-icon" /><h1>Solicitar Paseo</h1></div>
             <p className="form-subtitle">Completa los datos para solicitar un paseo</p>
 
-            {/* 1. Selecciona la mascota */}
+            {/* 1. Mascotas */}
             <div className="form-section">
               <h3>1. Selecciona la mascota</h3>
               <div className="mascotas-grid">
-                {usuario.mascotas?.map(m => (
-                  <div key={m.id} className={`mascota-card ${mascotasSeleccionadas.includes(m.id) ? 'selected' : ''}`} onClick={() => handleMascotaChange(m.id)}>
-                    <div className="mascota-check">
-                      <input type="checkbox" checked={mascotasSeleccionadas.includes(m.id)} readOnly />
+                {mascotas.length > 0 ? (
+                  mascotas.map(m => (
+                    <div key={m.idPerro} className={`mascota-card ${mascotasSeleccionadas.includes(m.idPerro) ? 'selected' : ''}`} onClick={() => handleMascotaChange(m.idPerro)}>
+                      <div className="mascota-check"><input type="checkbox" checked={mascotasSeleccionadas.includes(m.idPerro)} readOnly /></div>
+                      <div className="mascota-foto">🐕</div>
+                      <div className="mascota-info">
+                        <div className="mascota-nombre">{m.nombre}</div>
+                        <div className="mascota-raza">{m.raza}</div>
+                        <div className="mascota-edad">{m.edad} años</div>
+                      </div>
                     </div>
-                    <div className="mascota-foto">🐕</div>
-                    <div className="mascota-info">
-                      <div className="mascota-nombre">{m.nombre}</div>
-                      <div className="mascota-raza">{m.raza}</div>
-                      <div className="mascota-edad">{m.edad}</div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p>No tienes mascotas registradas. Ve a Configuración para agregar.</p>
+                )}
               </div>
               <button className="btn-link" onClick={() => navigate('/configuracion')}>+ Agregar otra mascota</button>
             </div>
@@ -159,29 +151,22 @@ function SolicitarPaseo() {
                 <div className={`servicio-card ${tipoServicio === '1h' ? 'selected' : ''}`} onClick={() => setTipoServicio('1h')}>
                   <div className="servicio-radio"><input type="radio" name="servicio" checked={tipoServicio === '1h'} readOnly /></div>
                   <div className="servicio-icono"><FaDog /></div>
-                  <div className="servicio-info">
-                    <div className="servicio-nombre">Paseo 1 hora</div>
-                    <div className="servicio-descripcion">Recorrido estándar</div>
-                  </div>
+                  <div className="servicio-info"><div className="servicio-nombre">Paseo 1 hora</div><div className="servicio-descripcion">Recorrido estándar</div></div>
                   <div className="servicio-precio">${PRECIOS.PASEO_1H.toLocaleString()} COP</div>
                 </div>
                 <div className={`servicio-card ${tipoServicio === '30min' ? 'selected' : ''}`} onClick={() => setTipoServicio('30min')}>
                   <div className="servicio-radio"><input type="radio" name="servicio" checked={tipoServicio === '30min'} readOnly /></div>
                   <div className="servicio-icono"><FaDog /></div>
-                  <div className="servicio-info">
-                    <div className="servicio-nombre">Paseo 30 min</div>
-                    <div className="servicio-descripcion">Para necesidades rápidas</div>
-                  </div>
+                  <div className="servicio-info"><div className="servicio-nombre">Paseo 30 min</div><div className="servicio-descripcion">Para necesidades rápidas</div></div>
                   <div className="servicio-precio">${PRECIOS.PASEO_30MIN.toLocaleString()} COP</div>
                 </div>
               </div>
             </div>
 
-            {/* 3. Fecha y hora con el nuevo diseño */}
+            {/* 3. Fecha y hora */}
             <div className="form-section">
               <h3>3. Fecha y hora</h3>
               <div className="datetime-group">
-                {/* Fecha */}
                 <div className="input-group">
                   <FaCalendarAlt className="input-icon" />
                   <DatePicker
@@ -193,25 +178,9 @@ function SolicitarPaseo() {
                     className="datepicker-input"
                   />
                 </div>
-                {/* Hora con máscara y selector AM/PM */}
-                <div className="input-group time-group">
+                <div className="input-group">
                   <FaClock className="input-icon" />
-                  <input
-                    type="text"
-                    value={hora}
-                    onChange={(e) => handleHoraChange(e.target.value)}
-                    placeholder="HH:MM"
-                    maxLength={5}
-                    className="time-input"
-                  />
-                  <select
-                    value={periodo}
-                    onChange={(e) => setPeriodo(e.target.value)}
-                    className="time-period"
-                  >
-                    <option value="AM">a.m.</option>
-                    <option value="PM">p.m.</option>
-                  </select>
+                  <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className="time-input" />
                 </div>
               </div>
               <div className="disponibilidad">Disponible hoy desde las 2:00 PM hasta las 8:00 PM</div>
@@ -225,16 +194,14 @@ function SolicitarPaseo() {
                 <input
                   type="text"
                   value={puntoEncuentro}
-                  readOnly
-                  onClick={() => mostrarAlerta('Próximamente', 'Pronto podrás editar el punto de encuentro', 'info')}
-                  className="readonly-input"
+                  onChange={(e) => setPuntoEncuentro(e.target.value)}
                   placeholder="Dirección del dueño"
                 />
               </div>
-              <p className="ayuda-texto">Se usará la dirección de tu perfil. Pronto podrás cambiarla.</p>
+              <p className="ayuda-texto">Puedes modificar el punto de encuentro si lo deseas.</p>
             </div>
 
-            <button className="btn-confirmar" onClick={handleConfirmar}><FaPaw /> Confirmar solicitud – ${total.toLocaleString()} COP</button>
+            <button className="btn-confirmar" onClick={handleConfirmar}><FaPaw /> Confirmar solicitud</button>
           </div>
 
           {/* Resumen */}
@@ -245,7 +212,7 @@ function SolicitarPaseo() {
                 <div className="resumen-mascota"><div className="resumen-foto">🐕</div><div className="resumen-info"><div className="resumen-nombre">{mascotasObjs.map(m => m.nombre).join(', ')}</div><div className="resumen-raza">{mascotasObjs.length === 1 ? mascotasObjs[0].raza : `${cantidad} mascotas`}</div></div></div>
                 <div className="resumen-item"><span>Servicio</span><span>{tipoServicio === '1h' ? 'Paseo 1 hora' : 'Paseo 30 min'}</span></div>
                 <div className="resumen-item"><span>Fecha</span><span>{fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span></div>
-                <div className="resumen-item"><span>Hora</span><span>{hora}: {periodo}</span></div>
+                <div className="resumen-item"><span>Hora</span><span>{hora}</span></div>
                 <div className="resumen-item"><span>Punto de encuentro</span><span>{puntoEncuentro}</span></div>
                 <hr />
                 <div className="resumen-item"><span>Subtotal</span><span>${total.toLocaleString()} COP</span></div>

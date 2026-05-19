@@ -18,11 +18,13 @@ function MiHistorial() {
   const [modalCalif, setModalCalif] = useState({ isOpen: false, solicitudId: null, paseadorNombre: '' });
   const navigate = useNavigate();
 
-  const cargarHistorial = (idDueño) => {
+  const cargarHistorial = () => {
+    if (!usuario) return;
     const solicitudes = getSolicitudes();
     const calificaciones = getCalificaciones();
+    // Solo mostrar las solicitudes que están FINALIZADAS (o ACEPTADAS para pruebas)
     const paseos = solicitudes
-      .filter(s => s.idDueño === idDueño && (s.estado === ESTADOS_SOLICITUD.FINALIZADA || s.estado === ESTADOS_SOLICITUD.ACEPTADA))
+      .filter(s => s.idDueño === usuario.idUsuario && s.estado === ESTADOS_SOLICITUD.FINALIZADA)
       .map(s => {
         const miCalif = calificaciones.find(c => c.solicitudId === s.id && c.tipo === 'dueño');
         return {
@@ -30,8 +32,8 @@ function MiHistorial() {
           fecha: new Date(s.fecha),
           fechaStr: new Date(s.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
           mascota: s.nombreMascota || (s.mascotas ? s.mascotas.map(m => m.nombre).join(', ') : 'Mascota'),
-          paseador: 'Paseador asignado',
-          calificacion: miCalif ? miCalif.puntaje : (s.estado === ESTADOS_SOLICITUD.FINALIZADA ? 0 : null),
+          paseador: 'Paseador asignado', // en simulación no tenemos nombre real
+          calificacion: miCalif ? miCalif.puntaje : null,
           yaCalificado: !!miCalif,
           estado: s.estado,
         };
@@ -41,14 +43,10 @@ function MiHistorial() {
   };
 
   useEffect(() => {
-    if (!loading && !usuario) {
-      navigate('/');
-      return;
+    if (!loading && usuario) {
+      cargarHistorial();
     }
-    if (usuario) {
-      cargarHistorial(usuario.id);
-    }
-  }, [usuario, loading, navigate]);
+  }, [usuario, loading]);
 
   const filtrarPorFecha = (paseo) => {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -89,7 +87,7 @@ function MiHistorial() {
       fecha: new Date().toISOString()
     };
     saveCalificacion(nuevaCalif);
-    cargarHistorial(usuario.id);
+    cargarHistorial(); // refrescar la lista
     mostrarAlerta('Calificación guardada', 'Gracias por calificar el paseo', 'success');
   };
 
@@ -103,7 +101,7 @@ function MiHistorial() {
         <button className="menu-toggle" onClick={toggleMenu}><FaBars /></button>
         <div className="header-right">
           <div className="user-info">
-            <span>{usuario.nombreCompleto}</span>
+            <span>{usuario.primerNombre} {usuario.primerApellido}</span>
             {usuario.fotoPerfil ? <img src={usuario.fotoPerfil} alt="foto" className="user-avatar-img" /> : <FaUserCircle className="user-avatar" />}
           </div>
         </div>
@@ -114,7 +112,7 @@ function MiHistorial() {
           <div className="historial-filtros">
             <div className="search-box">
               <FaSearch className="search-icon" />
-              <input type="text" placeholder="Buscar por mascota o paseador..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+              <input type="text" placeholder="Buscar por mascota..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
             </div>
             <div className="filtros-fecha">
               <button className={filtroFecha === 'hoy' ? 'active' : ''} onClick={() => setFiltroFecha('hoy')}>Hoy</button>
@@ -125,7 +123,7 @@ function MiHistorial() {
           </div>
           <div className="historial-lista">
             {paseosFiltrados.length === 0 ? (
-              <div className="sin-paseos">No hay paseos en este período</div>
+              <div className="sin-paseos">No hay paseos finalizados en este período</div>
             ) : (
               paseosFiltrados.map(paseo => (
                 <div key={paseo.id} className="historial-card">
@@ -134,7 +132,7 @@ function MiHistorial() {
                     <h3>{paseo.mascota}</h3>
                     <p className="paseador">{paseo.paseador}</p>
                     <div className="estrellas">
-                      {paseo.calificacion ? renderStars(paseo.calificacion) : (paseo.estado === ESTADOS_SOLICITUD.FINALIZADA && !paseo.yaCalificado ?
+                      {paseo.calificacion ? renderStars(paseo.calificacion) : (!paseo.yaCalificado ?
                         <button className="btn-calificar" onClick={() => handleCalificar(paseo.id, paseo.paseador)}>Calificar</button> :
                         <span className="sin-calif">No calificado</span>)}
                     </div>

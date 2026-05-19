@@ -9,121 +9,115 @@ import ModalAgregarTarjeta from '../components/Configuracion/ModalAgregarTarjeta
 import ModalListaTarjetas from '../components/Configuracion/ModalListaTarjetas';
 import ModalEditarPerfil from '../components/Configuracion/ModalEditarPerfil';
 import { useAuth } from '../context/AuthContext';
-import { updateUsuario, getNotificaciones, setNotificaciones } from '../services/api';
+import petApi from '@/core/infrastructure/api/pet.api';
 import { mostrarAlerta, confirmarAccion } from '../utils/alerts';
 import '../styles/pages/Configuracion.css';
 
 function Configuracion() {
-  const { user: usuario, loading, login } = useAuth();
+  const { user: authUser, loading: authLoading, login } = useAuth();
+  const [usuario, setUsuario] = useState(null);
   const [menuAbierto, setMenuAbierto] = useState(true);
   const [notificaciones, setNotificacionesState] = useState(false);
   const [modalAgregarMascota, setModalAgregarMascota] = useState(false);
   const [modalListaMascotas, setModalListaMascotas] = useState(false);
   const [modalDetalleMascota, setModalDetalleMascota] = useState(false);
   const [mascotaSeleccionada, setMascotaSeleccionada] = useState(null);
+  const [metodosPago, setMetodosPago] = useState([]);
   const [modalAgregarTarjeta, setModalAgregarTarjeta] = useState(false);
   const [modalListaTarjetas, setModalListaTarjetas] = useState(false);
   const [modalEditarPerfil, setModalEditarPerfil] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !usuario) {
+    if (authLoading) return;
+    if (!authUser) {
       navigate('/');
       return;
     }
-    if (usuario) {
-      setNotificacionesState(getNotificaciones());
-      if (!usuario.metodosPago) {
-        const updated = { ...usuario, metodosPago: [] };
-        updateUsuario(usuario.id, updated);
-        login(updated);
+    setUsuario(authUser);
+    // Cargar mascotas del dueño (sin userApi)
+    const cargarMascotas = async () => {
+      try {
+        const mascotas = await petApi.getPetsByOwner(authUser.idUsuario);
+        setUsuario(prev => ({ ...prev, mascotas }));
+      } catch (error) {
+        console.error('Error cargando mascotas:', error);
       }
-    }
-  }, [usuario, loading, navigate, login]);
+    };
+    cargarMascotas();
+  }, [authUser, authLoading, navigate]);
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
 
   const handleGuardarPerfil = (usuarioActualizado) => {
-    updateUsuario(usuarioActualizado.id, usuarioActualizado);
-    login(usuarioActualizado);
-    mostrarAlerta('Perfil actualizado', 'Los cambios se han guardado correctamente', 'success');
+    setUsuario(usuarioActualizado);
+    login(usuarioActualizado); // actualizar contexto
+    mostrarAlerta('Perfil actualizado', 'Los cambios se han guardado', 'success');
   };
 
-  // MASCOTAS
-  const agregarMascotaNueva = (nuevaMascota) => {
-    const mascotas = usuario.mascotas || [];
-    const updated = { ...usuario, mascotas: [...mascotas, nuevaMascota] };
-    updateUsuario(updated.id, updated);
-    login(updated);
-  };
-  const handleEliminarMascota = async (idMascota) => {
-    const confirmed = await confirmarAccion('Eliminar mascota', '¿Estás seguro de que quieres eliminar esta mascota?');
-    if (confirmed) {
-      const nuevasMascotas = (usuario.mascotas || []).filter(m => m.id !== idMascota);
-      const updated = { ...usuario, mascotas: nuevasMascotas };
-      updateUsuario(updated.id, updated);
-      login(updated);
-      mostrarAlerta('Mascota eliminada', 'La mascota ha sido eliminada', 'success');
+  // ========== MASCOTAS ==========
+  const agregarMascotaNueva = async (nuevaMascota) => {
+    try {
+      const created = await petApi.createPet(usuario.idUsuario, {
+        nombre: nuevaMascota.nombre,
+        raza: nuevaMascota.raza,
+        edad: parseInt(nuevaMascota.edad.split(' ')[0]) || 1,
+        peso: nuevaMascota.peso,
+        observaciones: nuevaMascota.observaciones || '',
+        foto: '',
+      });
+      setUsuario(prev => ({ ...prev, mascotas: [...(prev.mascotas || []), created] }));
+      mostrarAlerta('Mascota agregada', `${created.nombre} agregada`, 'success');
+    } catch (error) {
+      mostrarAlerta('Error', 'No se pudo agregar la mascota', 'error');
     }
   };
-  const handleActualizarMascota = (mascotaActualizada) => {
-    const nuevasMascotas = (usuario.mascotas || []).map(m => m.id === mascotaActualizada.id ? mascotaActualizada : m);
-    const updated = { ...usuario, mascotas: nuevasMascotas };
-    updateUsuario(updated.id, updated);
-    login(updated);
-    mostrarAlerta('Mascota actualizada', 'Los cambios se han guardado', 'success');
+
+  const handleEliminarMascota = async (idMascota) => {
+    const confirmed = await confirmarAccion('Eliminar mascota', '¿Estás seguro?');
+    if (confirmed) {
+      // Si tienes endpoint de eliminación, descomenta:
+      // await petApi.deletePet(idMascota);
+      const nuevasMascotas = usuario.mascotas.filter(m => m.idPerro !== idMascota);
+      setUsuario(prev => ({ ...prev, mascotas: nuevasMascotas }));
+      mostrarAlerta('Mascota eliminada', 'Se ha eliminado correctamente', 'success');
+    }
   };
+
+  const handleActualizarMascota = async (mascotaActualizada) => {
+    try {
+      // await petApi.updatePet(mascotaActualizada.idPerro, mascotaActualizada);
+      const nuevasMascotas = usuario.mascotas.map(m => m.idPerro === mascotaActualizada.idPerro ? mascotaActualizada : m);
+      setUsuario(prev => ({ ...prev, mascotas: nuevasMascotas }));
+      mostrarAlerta('Mascota actualizada', 'Cambios guardados', 'success');
+    } catch (error) {
+      mostrarAlerta('Error', 'No se pudo actualizar', 'error');
+    }
+  };
+
   const handleVerDetalleMascota = (mascota) => {
     setMascotaSeleccionada(mascota);
     setModalDetalleMascota(true);
   };
+
   const handleOpcionesMascotas = () => setModalListaMascotas(true);
   const handleAgregarMascota = () => setModalAgregarMascota(true);
 
-  // MÉTODOS DE PAGO
+  // ========== MÉTODOS DE PAGO (placeholder) ==========
   const handleAgregarTarjeta = () => setModalAgregarTarjeta(true);
-  const agregarTarjetaNueva = (nuevaTarjeta) => {
-    const metodos = usuario.metodosPago || [];
-    const updated = { ...usuario, metodosPago: [...metodos, nuevaTarjeta] };
-    updateUsuario(updated.id, updated);
-    login(updated);
-    mostrarAlerta('Tarjeta agregada', 'Método de pago guardado', 'success');
-  };
-  const handleEliminarTarjeta = async (idTarjeta) => {
-    const confirmed = await confirmarAccion('Eliminar tarjeta', '¿Eliminar este método de pago?');
-    if (confirmed) {
-      const nuevosMetodos = (usuario.metodosPago || []).filter(t => t.id !== idTarjeta);
-      const updated = { ...usuario, metodosPago: nuevosMetodos };
-      updateUsuario(updated.id, updated);
-      login(updated);
-      mostrarAlerta('Eliminada', 'Tarjeta eliminada', 'success');
-    }
-  };
-  const handleActualizarTarjeta = (tarjetaActualizada) => {
-    const nuevosMetodos = (usuario.metodosPago || []).map(t => t.id === tarjetaActualizada.id ? tarjetaActualizada : t);
-    const updated = { ...usuario, metodosPago: nuevosMetodos };
-    updateUsuario(updated.id, updated);
-    login(updated);
-    mostrarAlerta('Actualizada', 'Tarjeta actualizada', 'success');
-  };
-  const handleToggleTarjeta = (id) => {
-    const nuevosMetodos = (usuario.metodosPago || []).map(t => t.id === id ? { ...t, activa: !t.activa } : t);
-    const updated = { ...usuario, metodosPago: nuevosMetodos };
-    updateUsuario(updated.id, updated);
-    login(updated);
-  };
+  const agregarTarjetaNueva = () => mostrarAlerta('Próximamente', 'Métodos de pago próximamente', 'info');
   const handleOpcionesTarjetas = () => setModalListaTarjetas(true);
 
-  // NOTIFICACIONES
+  // ========== NOTIFICACIONES ==========
   const handleToggleNotificaciones = () => {
     const nuevoEstado = !notificaciones;
     setNotificacionesState(nuevoEstado);
-    setNotificaciones(nuevoEstado);
     mostrarAlerta('Notificaciones', nuevoEstado ? 'Activadas' : 'Desactivadas', 'info');
   };
 
-  const handleCambiarContrasena = () => mostrarAlerta('Próximamente', 'Cambio de contraseña disponible pronto', 'info');
-  const handleCerrarSesiones = () => mostrarAlerta('Próximamente', 'Cerrar sesiones activas disponible pronto', 'info');
+  // ========== SEGURIDAD ==========
+  const handleCambiarContrasena = () => mostrarAlerta('Próximamente', 'Cambio de contraseña próximo', 'info');
+  const handleCerrarSesiones = () => mostrarAlerta('Próximamente', 'Cerrar sesiones activas próximo', 'info');
 
   const handleOpciones = (seccion) => {
     if (seccion === 'Mascotas') handleOpcionesMascotas();
@@ -131,16 +125,21 @@ function Configuracion() {
     else if (seccion === 'Seguridad') mostrarAlerta('Próximamente', 'Más opciones de seguridad', 'info');
   };
 
-  if (loading) return <div>Cargando...</div>;
+  if (authLoading) return <div>Cargando...</div>;
   if (!usuario) return null;
 
   return (
     <div className="config-container">
       <div className="config-header">
         <button className="menu-toggle" onClick={toggleMenu}><FaBars /></button>
-        <div className="user-info">
-          <span>{usuario.nombreCompleto}</span>
-          {usuario.fotoPerfil ? <img src={usuario.fotoPerfil} alt="foto" className="user-avatar-img" /> : <FaUserCircle className="user-avatar" />}
+        <div className="header-right">
+          <button className="btn-notificaciones" onClick={() => mostrarAlerta('Próximamente', 'Notificaciones próximamente', 'info')}>
+            <FaBell />
+          </button>
+          <div className="user-info">
+            <span>{usuario.primerNombre} {usuario.primerApellido}</span>
+            {usuario.fotoPerfil ? <img src={usuario.fotoPerfil} alt="foto" className="user-avatar-img" /> : <FaUserCircle className="user-avatar" />}
+          </div>
         </div>
       </div>
       <div className="config-main">
@@ -150,7 +149,7 @@ function Configuracion() {
             <div className="perfil-info">
               <div className="perfil-foto">{usuario.fotoPerfil ? <img src={usuario.fotoPerfil} alt="perfil" className="perfil-foto-img" /> : '🐕'}</div>
               <div className="perfil-datos">
-                <h3>{usuario.nombreCompleto}</h3>
+                <h3>{usuario.primerNombre} {usuario.primerApellido}</h3>
                 <p>{usuario.correo}</p>
                 <p className="telefono">{usuario.telefono || 'Sin teléfono'}</p>
               </div>
@@ -161,28 +160,20 @@ function Configuracion() {
             <div className="config-card">
               <div className="card-header"><h3>Mascotas</h3><FaEllipsisV className="opciones-icon" onClick={() => handleOpciones('Mascotas')} /></div>
               <div className="card-list">
-                {usuario.mascotas?.length > 0 ? usuario.mascotas.map(m => (
-                  <div key={m.id} className="list-item">
-                    <div className="item-info"><FaPaw className="item-icon" /><span>{m.nombre}</span></div>
-                    <FaChevronRight className="item-action" onClick={() => handleVerDetalleMascota(m)} />
-                  </div>
-                )) : <p>No hay mascotas registradas</p>}
+                {usuario.mascotas?.length > 0 ? (
+                  usuario.mascotas.map(m => (
+                    <div key={m.idPerro} className="list-item">
+                      <div className="item-info"><FaPaw className="item-icon" /><span>{m.nombre}</span></div>
+                      <FaChevronRight className="item-action" onClick={() => handleVerDetalleMascota(m)} />
+                    </div>
+                  ))
+                ) : <p>No hay mascotas registradas</p>}
               </div>
               <button className="btn-agregar" onClick={handleAgregarMascota}><FaPlus /> Agregar mascota</button>
             </div>
             <div className="config-card">
               <div className="card-header"><h3>Métodos de pago</h3><FaEllipsisV className="opciones-icon" onClick={() => handleOpciones('Métodos de pago')} /></div>
-              <div className="card-list">
-                {usuario.metodosPago?.length === 0 ? <p>No hay tarjetas registradas</p> :
-                  usuario.metodosPago.map(t => (
-                    <div key={t.id} className="list-item">
-                      <div className="item-info"><FaCreditCard className="item-icon" /><span>{t.numero}</span></div>
-                      <div className="item-toggle">
-                        {t.activa ? <FaToggleOn className="toggle-on" onClick={() => handleToggleTarjeta(t.id)} /> : <FaToggleOff className="toggle-off" onClick={() => handleToggleTarjeta(t.id)} />}
-                      </div>
-                    </div>
-                  ))}
-              </div>
+              <div className="card-list"><p>Próximamente</p></div>
               <button className="btn-agregar" onClick={handleAgregarTarjeta}><FaPlus /> Agregar método</button>
             </div>
           </div>
@@ -208,7 +199,7 @@ function Configuracion() {
       <ModalListaMascotas isOpen={modalListaMascotas} onClose={() => setModalListaMascotas(false)} mascotas={usuario.mascotas || []} onActualizar={handleActualizarMascota} onEliminar={handleEliminarMascota} />
       <ModalDetalleMascota isOpen={modalDetalleMascota} onClose={() => setModalDetalleMascota(false)} mascota={mascotaSeleccionada} />
       <ModalAgregarTarjeta isOpen={modalAgregarTarjeta} onClose={() => setModalAgregarTarjeta(false)} onAgregar={agregarTarjetaNueva} />
-      <ModalListaTarjetas isOpen={modalListaTarjetas} onClose={() => setModalListaTarjetas(false)} tarjetas={usuario.metodosPago || []} onActualizar={handleActualizarTarjeta} onEliminar={handleEliminarTarjeta} />
+      <ModalListaTarjetas isOpen={modalListaTarjetas} onClose={() => setModalListaTarjetas(false)} tarjetas={metodosPago} onActualizar={() => {}} onEliminar={() => {}} />
       <ModalEditarPerfil isOpen={modalEditarPerfil} onClose={() => setModalEditarPerfil(false)} usuario={usuario} onGuardar={handleGuardarPerfil} />
     </div>
   );

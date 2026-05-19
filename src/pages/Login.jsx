@@ -13,7 +13,7 @@ function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth()
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,27 +25,29 @@ function Login() {
     }
 
     try {
-      setLoading(true)
+      setLoading(true);
 
-      const data = await authApi.login({email, password})
+      const data = await authApi.login({ email, password });
       localStorage.setItem('token', data.token);
 
-      const user = data.usuario
-      const hasRole = user.roles.some(rol => rol.idRol === ROLES.DUENO ) 
+      const user = data.usuario;
 
-      if (user.roles.length === 0) {
-        setError(`No hay ${hasRole ? 'dueños' : 'paseadores'} registrados. Crea una cuenta primero.`);
-        return;
-      }
+      // Determinar el rol principal del usuario
+      let userRol = null;
+      if (user.roles.some(r => r.idRol === ROLES.DUENO)) userRol = ROLES.DUENO;
+      else if (user.roles.some(r => r.idRol === ROLES.PASEADOR)) userRol = ROLES.PASEADOR;
+      else userRol = ROLES.ADMIN;
 
-      const sesion = { ...user, roles: user.roles };
+      const sesion = { ...user, roles: user.roles, rol: userRol };
 
       setSesionActual(sesion);
       login(sesion);
 
-      navigate(hasRole ? '/dashboard' : '/dashboard-paseador');
+      if (userRol === ROLES.DUENO) navigate('/dashboard');
+      else if (userRol === ROLES.PASEADOR) navigate('/dashboard-paseador');
+      else navigate('/');
     } catch (error) {
-      const errorCustom = error
+      const errorCustom = error;
       setError(errorCustom.message);
     } finally {
       setLoading(false);

@@ -6,38 +6,57 @@ import { useAuth } from '../context/AuthContext';
 import { getSolicitudes, updateSolicitud } from '../services/api';
 import { ESTADOS_SOLICITUD } from '../constants';
 import { mostrarAlerta, confirmarAccion } from '../utils/alerts';
+import petApi from '@/core/infrastructure/api/pet.api';
 import '../styles/pages/Dashboard.css';
 
-
 function Dashboard() {
-  const { user: usuario, loading } = useAuth();
+  const { user: usuario, loading: authLoading } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(true);
   const [perroSeleccionado, setPerroSeleccionado] = useState(null);
   const [actividadReciente, setActividadReciente] = useState([]);
+  const [mascotas, setMascotas] = useState([]);
+  const [cargandoMascotas, setCargandoMascotas] = useState(false);
+  const [errorMascotas, setErrorMascotas] = useState(null);
   const navigate = useNavigate();
 
   const cargarSolicitudes = () => {
     if (!usuario) return;
     const todas = getSolicitudes();
     const misSolicitudes = todas
-      .filter(s => s.idDueño === usuario.id)
+      .filter(s => s.idDueño === usuario.idUsuario)
       .sort((a, b) => b.id - a.id)
       .slice(0, 5);
     setActividadReciente(misSolicitudes);
   };
 
   useEffect(() => {
-    if (!loading) {
-      if (!usuario) {
-        navigate('/');
-      } else {
-        if (usuario.mascotas?.length) setPerroSeleccionado(usuario.mascotas[0]);
-        cargarSolicitudes();
-      }
+    if (!authLoading && usuario) {
+      const cargarMascotas = async () => {
+        setCargandoMascotas(true);
+        setErrorMascotas(null);
+        try {
+          console.log('Cargando mascotas para ownerId:', usuario.idUsuario);
+          const pets = await petApi.getPetsByOwner(usuario.idUsuario);
+          console.log('Mascotas recibidas:', pets);
+          setMascotas(pets);
+          if (pets && pets.length) setPerroSeleccionado(pets[0]);
+        } catch (error) {
+          console.error('Error cargando mascotas:', error);
+          setErrorMascotas('No se pudieron cargar tus mascotas. Intenta recargar la página.');
+        } finally {
+          setCargandoMascotas(false);
+        }
+      };
+      cargarMascotas();
+      cargarSolicitudes();
     }
-  }, [usuario, loading, navigate]);
+  }, [usuario, authLoading]);
 
   const handleSolicitarPaseo = () => {
+    if (!perroSeleccionado && mascotas.length === 0) {
+      mostrarAlerta('Atención', 'No tienes mascotas registradas', 'warning');
+      return;
+    }
     if (!perroSeleccionado) {
       mostrarAlerta('Atención', 'Selecciona una mascota primero', 'warning');
       return;
@@ -86,7 +105,7 @@ function Dashboard() {
     }
   };
 
-  if (loading) return <div>Cargando...</div>;
+  if (authLoading || cargandoMascotas) return <div>Cargando...</div>;
   if (!usuario) return null;
 
   return (
@@ -98,7 +117,7 @@ function Dashboard() {
             <FaBell />
           </button>
           <div className="user-info">
-            <span>{usuario.nombreCompleto}</span>
+            <span>{usuario.primerNombre} {usuario.primerApellido}</span>
             {usuario.fotoPerfil ? <img src={usuario.fotoPerfil} alt="foto" className="user-avatar-img" /> : <FaUserCircle className="user-avatar" />}
           </div>
         </div>
@@ -109,22 +128,33 @@ function Dashboard() {
           <div className="content-grid">
             <div className="col-left">
               <div className="section-welcome">
-                <h2>Hola, {usuario.primerNombre.split(' ')[0]} 👋</h2>
-                <p>¿Listo(a) para pasear a <strong>{perroSeleccionado ? perroSeleccionado.nombre : 'tu perro'}</strong>?</p>
+                <h2>Hola, {usuario.primerNombre} 👋</h2>
+                <p>
+                  ¿Listo(a) para pasear a{' '}
+                  <strong>{perroSeleccionado ? perroSeleccionado.nombre : 'tu perro'}</strong>?
+                </p>
                 <button className="btn-solicitar" onClick={handleSolicitarPaseo}><FaPaw color="white" /> Solicitar Paseo</button>
               </div>
               <div className="section-perros">
                 <h3>Mis mascotas</h3>
+                {errorMascotas && <p className="error-message">{errorMascotas}</p>}
                 <div className="perros-grid">
-                  {usuario.mascotas?.map(perro => (
-                    <div key={perro.id} className={`perro-card ${perroSeleccionado?.id === perro.id ? 'selected' : ''}`} onClick={() => setPerroSeleccionado(perro)}>
-                      <div className="perro-foto">🐕</div>
-                      <div className="perro-info">
-                        <div className="perro-nombre">{perro.nombre}</div>
+                  {mascotas.length > 0 ? (
+                    mascotas.map(perro => (
+                      <div
+                        key={perro.idPerro}
+                        className={`perro-card ${perroSeleccionado?.idPerro === perro.idPerro ? 'selected' : ''}`}
+                        onClick={() => setPerroSeleccionado(perro)}
+                      >
+                        <div className="perro-foto">🐕</div>
+                        <div className="perro-info">
+                          <div className="perro-nombre">{perro.nombre}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {!usuario.mascotas?.length && <p>No tienes perros registrados.</p>}
+                    ))
+                  ) : (
+                    <p>No tienes perros registrados.</p>
+                  )}
                 </div>
               </div>
               <div className="section-mapa">

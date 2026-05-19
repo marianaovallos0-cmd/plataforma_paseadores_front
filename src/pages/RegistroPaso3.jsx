@@ -9,7 +9,7 @@ function RegistroPaso3() {
   const [mascotas, setMascotas] = useState([]);
   const [nombre, setNombre] = useState('');
   const [raza, setRaza] = useState('');
-  const [peso, setPeso] = useState(''); // Cambio: tamaño -> peso
+  const [peso, setPeso] = useState('');
   const [edad, setEdad] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [error, setError] = useState('');
