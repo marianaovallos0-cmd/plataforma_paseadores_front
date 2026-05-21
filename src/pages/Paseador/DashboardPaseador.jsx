@@ -1,38 +1,40 @@
-import { useState, useEffect } from 'react';
+import Loader from '@/components/Loader';
+import { useRequestByWalker } from '@/hooks/useRequests';
+import { useEffect, useState } from 'react';
+import { FaBars, FaCalendarCheck, FaClock, FaDog, FaMapMarkerAlt, FaToggleOff, FaToggleOn, FaUserCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaCalendarCheck, FaClock, FaDog, FaMapMarkerAlt, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import MenuLateral from '../../components/MenuLateral';
 import { useAuth } from '../../context/AuthContext';
-import { getSolicitudes, updateSolicitud, updatePaseador, setSesionActual } from '../../services/api';
-import { ESTADOS_SOLICITUD } from '../../constants';
-import { mostrarAlerta, confirmarAccion } from '../../utils/alerts';
+import { setSesionActual, updatePaseador } from '../../services/api';
 import '../../styles/pages/DashboardPaseador.css';
-import Loader from '@/components/Loader';
+import { confirmarAccion, mostrarAlerta } from '../../utils/alerts';
+import { useWalksByWalker } from '@/hooks/useWalks';
 
 function DashboardPaseador() {
   const { user: paseador, loading, login } = useAuth();
+  
   const [menuAbierto, setMenuAbierto] = useState(true);
-  const [solicitudesPendientes, setSolicitudesPendientes] = useState([]);
-  const [paseosActivos, setPaseosActivos] = useState([]);
   const [disponible, setDisponible] = useState(paseador?.disponible ?? true);
+  const {
+    pendingRequests, 
+    loadRequests, 
+    acceptRequest, 
+    rejectRequest
+  } = useRequestByWalker(paseador.idUsuario)
+  const {
+    inRouteWalks, 
+    finalizedWalks, 
+    loadWalks, 
+    endWalk
+  } = useWalksByWalker(paseador.idUsuario)
+
   const navigate = useNavigate();
 
-  const cargarSolicitudes = () => {
-    if (!paseador) return;
-    const todas = getSolicitudes();
-    const pendientes = todas.filter(s => s.estado === ESTADOS_SOLICITUD.PENDIENTE);
-    const activos = todas.filter(s => s.estado === ESTADOS_SOLICITUD.ACEPTADA && s.idPaseador === paseador.id);
-    setSolicitudesPendientes(pendientes);
-    setPaseosActivos(activos);
-  };
-
   useEffect(() => {
-    if (!paseador) {
+    if (!paseador || !paseador.idUsuario) {
       navigate('/');
-      return;
     }
-    cargarSolicitudes();
-  }, [paseador]);
+  }, [paseador, navigate]);
 
   // Cambiar disponibilidad y guardar en localStorage
   const toggleDisponibilidad = async () => {
@@ -60,24 +62,33 @@ function DashboardPaseador() {
     }
     const confirmed = await confirmarAccion('Aceptar solicitud', '¿Aceptar este paseo?');
     if (confirmed) {
-      updateSolicitud(id, { estado: ESTADOS_SOLICITUD.ACEPTADA, idPaseador: paseador.id });
-      cargarSolicitudes();
+      await acceptRequest(id);
       mostrarAlerta('Aceptada', 'Solicitud aceptada', 'success');
+    }
+  };
+
+  const finalizarPaseo = async (id) => {
+    const confirmed = await confirmarAccion('Finalizar Paseo', '¿Deseas finalizar el paseo?');
+    if (confirmed) {
+      await endWalk(id);
+      mostrarAlerta('Aceptada', 'Paseo finalizado', 'success');
     }
   };
 
   const rechazarSolicitud = async (id) => {
     const confirmed = await confirmarAccion('Rechazar solicitud', '¿Rechazar este paseo?');
     if (confirmed) {
-      updateSolicitud(id, { estado: ESTADOS_SOLICITUD.RECHAZADA });
-      cargarSolicitudes();
+      await rejectRequest(id)
       mostrarAlerta('Rechazada', 'Solicitud rechazada', 'info');
     }
   };
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-  if (loading) return <Loader/>;
+  if (loading || loadRequests) return <Loader/>;
   if (!paseador) return null;
+
+  const fullName = `${paseador.primerNombre} ${paseador.primerApellido}`
+  
 
   return (
     <div className="dashboard-paseador-container">
@@ -85,7 +96,7 @@ function DashboardPaseador() {
         <button className="menu-toggle" onClick={toggleMenu}><FaBars /></button>
         <div className="header-right">
           <div className="user-info">
-            <span>{paseador.nombreCompleto}</span>
+            <span>{fullName}</span>
             {paseador.fotoPerfil ? <img src={paseador.fotoPerfil} alt="perfil" className="user-avatar-img" /> : <FaUserCircle className="user-avatar" />}
           </div>
         </div>
@@ -93,6 +104,7 @@ function DashboardPaseador() {
       <div className="dashboard-main">
         <MenuLateral menuAbierto={menuAbierto} />
         <div className="dashboard-content">
+          <h1>Hola! {fullName} 👋</h1>
           {/* Estado de disponibilidad */}
           <div className="disponibilidad-card">
             <div className="disponibilidad-info">
@@ -109,19 +121,19 @@ function DashboardPaseador() {
 
           <div className="seccion">
             <h2><FaDog /> Solicitudes pendientes</h2>
-            {solicitudesPendientes.length === 0 ? <div className="empty-card">No hay solicitudes pendientes</div> :
+            {pendingRequests.length === 0 ? <div className="empty-card">No hay solicitudes pendientes</div> :
               <div className="cards-grid">
-                {solicitudesPendientes.map(s => (
-                  <div key={s.id} className="solicitud-card">
-                    <div className="card-header"><span className="mascota-nombre">{s.nombreMascota}</span><span className="precio">${s.precioTotal.toLocaleString()} COP</span></div>
+                {pendingRequests.map(s => (
+                  <div key={s.idSolicitud} className="solicitud-card">
+                    <div className="card-header"><span className="mascota-nombre">Cantidad de mascotas: {s.cantidadPerros}</span></div>
                     <div className="card-info">
-                      <p><FaCalendarCheck /> {new Date(s.fecha).toLocaleDateString('es-ES')}</p>
-                      <p><FaClock /> {s.hora}</p>
+                      <p><FaCalendarCheck /> {new Date(s.fechaSolicitud).toLocaleDateString('es-ES')}</p>
+                      <p><FaClock /> {s.horaSugerida}</p>
                       <p><FaMapMarkerAlt /> {s.puntoEncuentro || 'Punto de encuentro no especificado'}</p>
                     </div>
                     <div className="card-actions">
-                      <button className="btn-aceptar" onClick={() => aceptarSolicitud(s.id)}>Aceptar</button>
-                      <button className="btn-rechazar" onClick={() => rechazarSolicitud(s.id)}>Rechazar</button>
+                      <button className="btn-aceptar" onClick={() => aceptarSolicitud(s.idSolicitud)}>Aceptar</button>
+                      <button className="btn-rechazar" onClick={() => rechazarSolicitud(s.idSolicitud)}>Rechazar</button>
                     </div>
                   </div>
                 ))}
@@ -130,17 +142,44 @@ function DashboardPaseador() {
           </div>
 
           <div className="seccion">
-            <h2><FaCalendarCheck /> Mis próximos paseos</h2>
-            {paseosActivos.length === 0 ? <div className="empty-card">No tienes paseos activos</div> :
-              <div className="cards-grid">
-                {paseosActivos.map(s => (
-                  <div key={s.id} className="solicitud-card activo">
-                    <div className="card-header"><span className="mascota-nombre">{s.nombreMascota}</span><span className="precio">${s.precioTotal.toLocaleString()} COP</span></div>
-                    <div className="card-info"><p><FaCalendarCheck /> {new Date(s.fecha).toLocaleDateString('es-ES')}</p><p><FaClock /> {s.hora}</p></div>
+            {loadWalks && <Loader/>}
+            {!loadWalks && (
+              <>
+                <h2><FaCalendarCheck /> Mis paseos</h2>
+                {inRouteWalks.length === 0 ? <div className="empty-card">No tienes paseos activos</div> :
+                  <div className="cards-grid">
+                    {inRouteWalks.map(s => (
+                      <div key={s.idPaseo} className="solicitud-card activo">
+                        <div className="card-header"><span className="mascota-nombre">{s.observaciones}</span><span className="precio">$24.000 COP</span></div>
+                        <div className="card-info"><p><FaCalendarCheck /> {new Date(s.fechaInicio).toLocaleDateString('es-ES')}</p><p><FaClock /> {s.fechaFin}</p></div>
+                        <div className="card-actions">
+                          <button className="btn-aceptar" onClick={() => finalizarPaseo(s.idPaseo)}>Finalizar</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            }
+                }
+              </>
+            )}
+          </div>
+
+          <div className="seccion">
+            {loadWalks && <Loader/>}
+            {!loadWalks && (
+              <>
+                <h2><FaCalendarCheck /> Paseos finalizados</h2>
+                {finalizedWalks.length === 0 ? <div className="empty-card">No tienes paseos activos</div> :
+                  <div className="cards-grid">
+                    {finalizedWalks.map(s => (
+                      <div key={s.idPaseo} className="solicitud-card activo">
+                        <div className="card-header"><span className="mascota-nombre">{s.observaciones}</span><span className="precio">$24.000 COP</span></div>
+                        <div className="card-info"><p><FaCalendarCheck /> {new Date(s.fechaInicio).toLocaleDateString('es-ES')}</p><p><FaClock /> {s.fechaFin}</p></div>
+                      </div>
+                    ))}
+                  </div>
+                }
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -21,6 +21,12 @@ export interface SolicitudResponse {
   idPaseador: number
 }
 
+export interface SolicitudEstadoResponse {
+  idSolicitud: number;
+  estado: string
+  mensaje: string
+}
+
 class SolicitudApi {
   private static instance: SolicitudApi;
   private constructor() {}
@@ -37,6 +43,21 @@ class SolicitudApi {
   async getByOwnerId(ownerId: number) {
     const response = await httpClient.get(`/owners/${ownerId}/requests`);
     return handleApiResponse<SolicitudResponse[]>(response);
+  }
+
+  async getByWalkerId(walkerId: number) {
+    const response = await httpClient.get(`/paseador/${walkerId}/requests`);
+    return handleApiResponse<SolicitudResponse[]>(response);
+  }
+
+  async acceptRequest(walkerId:number, requestId: number) {
+    const response = await httpClient.patch(`/paseador/${walkerId}/requests/${requestId}/accept`);
+    return handleApiResponse<SolicitudEstadoResponse>(response);
+  }
+
+  async rejectRequest(walkerId:number, requestId: number) {
+    const response = await httpClient.patch(`/paseador/${walkerId}/requests/${requestId}/reject`);
+    return handleApiResponse<SolicitudEstadoResponse>(response);
   }
 }
 

@@ -5,11 +5,10 @@ import { useEffect, useState } from 'react';
 import { FaBars, FaBell, FaPaw, FaUserCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import MenuLateral from '../components/MenuLateral';
-import { ESTADOS_SOLICITUD } from '../constants';
 import { useAuth } from '../context/AuthContext';
-import { getSolicitudes, updateSolicitud } from '../services/api';
+import { getSolicitudes } from '../services/api';
 import '../styles/pages/Dashboard.css';
-import { confirmarAccion, mostrarAlerta } from '../utils/alerts';
+import { mostrarAlerta } from '../utils/alerts';
 
 function Dashboard() {
   const { user: usuario, loading: authLoading } = useAuth();
@@ -64,36 +63,6 @@ function Dashboard() {
       return;
     }
     navigate('/solicitar-paseo');
-  };
-
-  const handleCancelar = async (id) => {
-    const solicitud = actividadReciente.find(s => s.id === id);
-    if (solicitud?.estado !== ESTADOS_SOLICITUD.PENDIENTE) return;
-    const confirmed = await confirmarAccion('Cancelar solicitud', '¿Estás seguro de que quieres cancelar esta solicitud?');
-    if (confirmed) {
-      updateSolicitud(id, { estado: ESTADOS_SOLICITUD.CANCELADA });
-      cargarSolicitudes();
-      mostrarAlerta('Cancelada', 'La solicitud ha sido cancelada', 'success');
-    }
-  };
-
-  const handleAceptar = async (id) => {
-    const solicitud = actividadReciente.find(s => s.id === id);
-    if (solicitud?.estado !== ESTADOS_SOLICITUD.PENDIENTE) return;
-    updateSolicitud(id, { estado: ESTADOS_SOLICITUD.ACEPTADA });
-    cargarSolicitudes();
-    mostrarAlerta('Aceptada', 'Solicitud aceptada (simulación)', 'success');
-  };
-
-  const handleFinalizar = async (id) => {
-    const solicitud = actividadReciente.find(s => s.id === id);
-    if (solicitud?.estado !== ESTADOS_SOLICITUD.ACEPTADA) return;
-    const confirmed = await confirmarAccion('Finalizar paseo', '¿Estás seguro de que el paseo ha terminado?');
-    if (confirmed) {
-      updateSolicitud(id, { estado: ESTADOS_SOLICITUD.FINALIZADA });
-      cargarSolicitudes();
-      mostrarAlerta('Éxito', 'Paseo finalizado. Puedes calificarlo en "Mi historial"', 'success');
-    }
   };
 
   if (authLoading || cargandoMascotas) return <Loader/>;
