@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { savePaseador, setSesionActual } from '../../services/api';
 import '../../styles/pages/RegistroPaseador.css';
+import Loader from '@/components/Loader';
 
 function RegistroPaseadorPaso3() {
   const [userData, setUserData] = useState(null);
@@ -44,7 +45,7 @@ function RegistroPaseadorPaso3() {
     navigate('/');
   };
 
-  if (!userData) return <div>Cargando...</div>;
+  if (!userData) return <Loader/>;
 
   return (
     <div className="registro-container">

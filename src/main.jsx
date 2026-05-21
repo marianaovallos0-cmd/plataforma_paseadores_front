@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import './index.css';
+import '@/styles/pages/loader.css'
 import './core/infrastructure/http/interceptors/request-auth.interceptor';
 
 ReactDOM.createRoot(document.getElementById('root')).render(

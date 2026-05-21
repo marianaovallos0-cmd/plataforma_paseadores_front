@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import Loader from '@/components/Loader';
+import RecentActivity from '@/components/RecentActivity';
+import petApi from '@/core/infrastructure/api/pet.api';
+import { useEffect, useState } from 'react';
+import { FaBars, FaBell, FaPaw, FaUserCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPaw, FaSpinner, FaCheckCircle, FaTimesCircle, FaTrash, FaCheck, FaBell } from 'react-icons/fa';
 import MenuLateral from '../components/MenuLateral';
+import { ESTADOS_SOLICITUD } from '../constants';
 import { useAuth } from '../context/AuthContext';
 import { getSolicitudes, updateSolicitud } from '../services/api';
-import { ESTADOS_SOLICITUD } from '../constants';
-import { mostrarAlerta, confirmarAccion } from '../utils/alerts';
-import petApi from '@/core/infrastructure/api/pet.api';
 import '../styles/pages/Dashboard.css';
+import { confirmarAccion, mostrarAlerta } from '../utils/alerts';
 
 function Dashboard() {
   const { user: usuario, loading: authLoading } = useAuth();
@@ -94,18 +96,7 @@ function Dashboard() {
     }
   };
 
-  const getEstadoBadge = (estado) => {
-    switch (estado) {
-      case ESTADOS_SOLICITUD.PENDIENTE: return { texto: 'Buscando paseador...', clase: 'badge-pendiente', icono: <FaSpinner className="icono-girando" /> };
-      case ESTADOS_SOLICITUD.ACEPTADA: return { texto: 'Paseo aceptado', clase: 'badge-aceptada', icono: <FaCheckCircle /> };
-      case ESTADOS_SOLICITUD.RECHAZADA: return { texto: 'Rechazada', clase: 'badge-rechazada', icono: <FaTimesCircle /> };
-      case ESTADOS_SOLICITUD.FINALIZADA: return { texto: 'Finalizada', clase: 'badge-finalizada', icono: <FaCheckCircle /> };
-      case ESTADOS_SOLICITUD.CANCELADA: return { texto: 'Cancelada', clase: 'badge-rechazada', icono: <FaTimesCircle /> };
-      default: return { texto: estado, clase: '', icono: null };
-    }
-  };
-
-  if (authLoading || cargandoMascotas) return <div>Cargando...</div>;
+  if (authLoading || cargandoMascotas) return <Loader/>;
   if (!usuario) return null;
 
   return (
@@ -166,38 +157,7 @@ function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="col-right">
-              <div className="actividad-card">
-                <h3>Actividad reciente</h3>
-                {actividadReciente.length === 0 ? <p className="actividad-vacia">No hay actividad reciente</p> :
-                  <div className="actividad-lista">
-                    {actividadReciente.map(solicitud => {
-                      const estadoInfo = getEstadoBadge(solicitud.estado);
-                      return (
-                        <div key={solicitud.id} className="actividad-item">
-                          <div className="actividad-info">
-                            <div className="actividad-mascota">{solicitud.nombreMascota || solicitud.mascotas?.map(m => m.nombre).join(', ')}</div>
-                            <div className="actividad-fecha">{new Date(solicitud.fecha).toLocaleDateString('es-ES')} - {solicitud.hora}</div>
-                            <div className="actividad-acciones">
-                              <span className={`estado-badge ${estadoInfo.clase}`}>{estadoInfo.icono} {estadoInfo.texto}</span>
-                              {solicitud.estado === ESTADOS_SOLICITUD.PENDIENTE && (
-                                <>
-                                  <button className="btn-aceptar" onClick={() => handleAceptar(solicitud.id)}><FaCheck /> Aceptar (prueba)</button>
-                                  <button className="btn-cancelar" onClick={() => handleCancelar(solicitud.id)}><FaTrash /> Cancelar</button>
-                                </>
-                              )}
-                              {solicitud.estado === ESTADOS_SOLICITUD.ACEPTADA && (
-                                <button className="btn-finalizar" onClick={() => handleFinalizar(solicitud.id)}><FaCheck /> Finalizar paseo</button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                }
-              </div>
-            </div>
+            <RecentActivity/>
           </div>
         </div>
       </div>

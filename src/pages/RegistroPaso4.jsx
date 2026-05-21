@@ -6,6 +6,7 @@ import petApi from '@/core/infrastructure/api/pet.api';
 import { ROLES } from '@/constants';
 import { mostrarAlerta } from '../utils/alerts';
 import '../styles/pages/RegistroPaso4.css';
+import Loader from '@/components/Loader';
 
 function RegistroPaso4() {
   const [userData, setUserData] = useState(null);
@@ -103,7 +104,7 @@ function RegistroPaso4() {
     }
   };
 
-  if (!userData) return <div>Cargando...</div>;
+  if (!userData) return <Loader/>;
 
   return (
     <div className="registro-container">

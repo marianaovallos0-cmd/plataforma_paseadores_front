@@ -7,6 +7,7 @@ import { getSolicitudes, getCalificaciones, saveCalificacion } from '../../servi
 import ModalCalificarGenerico from '../../components/ModalCalificarGenerico';
 import { mostrarAlerta } from '../../utils/alerts';
 import '../../styles/pages/HistorialPaseador.css';
+import Loader from '@/components/Loader';
 
 function HistorialPaseador() {
   const { user: paseador, loading } = useAuth();
@@ -69,7 +70,7 @@ function HistorialPaseador() {
   };
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <Loader/>;
   if (!paseador) return null;
 
   return (

@@ -11,7 +11,14 @@ export interface CreateSolicitudPayload {
 
 export interface SolicitudResponse {
   idSolicitud: number;
-  // ... otros campos que devuelva el backend
+  fechaSolicitud: string
+  estado: string
+  horaSugerida: string
+  puntoEncuentro: string
+  cantidadPerros: number
+  observaciones: string
+  idDueno: number
+  idPaseador: number
 }
 
 class SolicitudApi {
@@ -23,11 +30,13 @@ class SolicitudApi {
   }
 
   async createSolicitud(ownerId: number, data: CreateSolicitudPayload) {
-    const token = localStorage.getItem('token');
-    const response = await httpClient.post(`/owners/${ownerId}/requests`, data, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await httpClient.post(`/owners/${ownerId}/requests`, data);
     return handleApiResponse<SolicitudResponse>(response);
+  }
+
+  async getByOwnerId(ownerId: number) {
+    const response = await httpClient.get(`/owners/${ownerId}/requests`);
+    return handleApiResponse<SolicitudResponse[]>(response);
   }
 }
 

@@ -7,6 +7,7 @@ import { updatePaseador, setSesionActual } from '../../services/api';
 import { DIAS_SEMANA } from '../../constants';
 import { mostrarAlerta, confirmarAccion } from '../../utils/alerts';
 import '../../styles/pages/HorariosPaseador.css';
+import Loader from '@/components/Loader';
 
 function HorariosPaseador() {
   const { user: paseador, loading, login } = useAuth();
@@ -70,7 +71,7 @@ function HorariosPaseador() {
   };
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <Loader/>;
   if (!paseador) return null;
 
   return (

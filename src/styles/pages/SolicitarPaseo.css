@@ -15,6 +15,8 @@
   align-items: center;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   z-index: 10;
+  position: sticky;
+  top: 0;
 }
 
 .menu-toggle {
@@ -308,6 +310,16 @@
   background: transparent;
   outline: none;
   font-size: 0.9rem;
+}
+
+.input-group textarea {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.9rem;
+  resize: vertical;
 }
 
 .react-datepicker-wrapper {

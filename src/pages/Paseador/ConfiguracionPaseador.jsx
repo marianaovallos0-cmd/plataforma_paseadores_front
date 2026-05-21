@@ -7,6 +7,7 @@ import { updatePaseador, setSesionActual } from '../../services/api';
 import { validarNombre, validarEmail, validarTelefono, getErrorMessage } from '../../utils/validaciones';
 import { mostrarAlerta, confirmarAccion } from '../../utils/alerts';
 import '../../styles/pages/ConfiguracionPaseador.css';
+import Loader from '@/components/Loader';
 
 function ConfiguracionPaseador() {
   const { user: paseador, loading, login } = useAuth();
@@ -81,7 +82,7 @@ function ConfiguracionPaseador() {
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <Loader/>;
   if (!paseador) return null;
 
   return (

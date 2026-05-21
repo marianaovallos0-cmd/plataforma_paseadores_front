@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import Loader from '@/components/Loader';
+import { useEffect, useState } from 'react';
+import { FaBars, FaChevronRight, FaRegStar, FaSearch, FaStar, FaUserCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaSearch, FaChevronRight, FaStar, FaRegStar } from 'react-icons/fa';
 import MenuLateral from '../components/MenuLateral';
 import ModalCalificarGenerico from '../components/ModalCalificarGenerico';
-import { useAuth } from '../context/AuthContext';
-import { getSolicitudes, getCalificaciones, saveCalificacion } from '../services/api';
 import { ESTADOS_SOLICITUD } from '../constants';
-import { mostrarAlerta } from '../utils/alerts';
+import { useAuth } from '../context/AuthContext';
+import { getCalificaciones, getSolicitudes, saveCalificacion } from '../services/api';
 import '../styles/pages/MiHistorial.css';
+import { mostrarAlerta } from '../utils/alerts';
 
 function MiHistorial() {
   const { user: usuario, loading } = useAuth();
@@ -92,7 +93,7 @@ function MiHistorial() {
   };
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <Loader/>;
   if (!usuario) return null;
 
   return (

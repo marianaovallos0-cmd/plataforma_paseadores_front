@@ -1,18 +1,16 @@
+import Loader from '@/components/Loader';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserCircle } from 'react-icons/fa';
 import MenuLateral from '../components/MenuLateral';
 import { useAuth } from '../context/AuthContext';
-import { mostrarAlerta } from '../utils/alerts';
 import '../styles/pages/Pagos.css';
 
 function Pagos() {
   const { user: usuario, loading } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(true);
-  const navigate = useNavigate();
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <Loader/>;
   if (!usuario) return null;
 
   return (

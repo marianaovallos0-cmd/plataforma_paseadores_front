@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { publicRoutes } from "./routes/public.routes";
 import type { AppRoute } from "./types/route.type";
 import { useRoutes } from "react-router-dom";
+import Loader from "@/components/Loader";
 
 const routes = [
   ...publicRoutes
@@ -12,7 +13,7 @@ const renderRoutes = (routes: AppRoute[]) => {
     const Page = route.element;
 
     let content = (
-      <Suspense fallback={<div>Loading&hellip;</div>}>
+      <Suspense fallback={<Loader/>}>
         <Page />
       </Suspense>
     );

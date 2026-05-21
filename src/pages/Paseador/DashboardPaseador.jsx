@@ -7,6 +7,7 @@ import { getSolicitudes, updateSolicitud, updatePaseador, setSesionActual } from
 import { ESTADOS_SOLICITUD } from '../../constants';
 import { mostrarAlerta, confirmarAccion } from '../../utils/alerts';
 import '../../styles/pages/DashboardPaseador.css';
+import Loader from '@/components/Loader';
 
 function DashboardPaseador() {
   const { user: paseador, loading, login } = useAuth();
@@ -75,7 +76,7 @@ function DashboardPaseador() {
   };
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <Loader/>;
   if (!paseador) return null;
 
   return (

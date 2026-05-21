@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import petApi from '@/core/infrastructure/api/pet.api';
 import { mostrarAlerta, confirmarAccion } from '../utils/alerts';
 import '../styles/pages/Configuracion.css';
+import Loader from '@/components/Loader';
 
 function Configuracion() {
   const { user: authUser, loading: authLoading, login } = useAuth();
@@ -125,7 +126,7 @@ function Configuracion() {
     else if (seccion === 'Seguridad') mostrarAlerta('Próximamente', 'Más opciones de seguridad', 'info');
   };
 
-  if (authLoading) return <div>Cargando...</div>;
+  if (authLoading) return <Loader/>;
   if (!usuario) return null;
 
   return (

@@ -1,30 +1,36 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaDog, FaPaw, FaMapMarkerAlt, FaCalendarAlt, FaClock } from 'react-icons/fa';
-import MenuLateral from '../components/MenuLateral';
-import { useAuth } from '../context/AuthContext';
-import { saveSolicitud } from '../services/api';
-import { PRECIOS, ESTADOS_SOLICITUD } from '../constants';
-import { mostrarAlerta } from '../utils/alerts';
-import petApi from '@/core/infrastructure/api/pet.api';
+import Loader from '@/components/Loader';
+import { RatingStars } from '@/components/RatingStars';
 import direccionApi from '@/core/infrastructure/api/direccion.api';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { registerLocale } from 'react-datepicker';
+import petApi from '@/core/infrastructure/api/pet.api';
+import solicitudApi from "@/core/infrastructure/api/solicitud.api";
+import { useWalkers } from '@/hooks/useWalkers';
 import es from 'date-fns/locale/es';
-registerLocale('es', es);
+import { useEffect, useState } from 'react';
+import DatePicker, { registerLocale } from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { BiInfoCircle } from 'react-icons/bi';
+import { FaBars, FaCalendarAlt, FaClock, FaDog, FaMapMarkerAlt, FaPaw, FaUserCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import MenuLateral from '../components/MenuLateral';
+import { PRECIOS } from '../constants';
+import { useAuth } from '../context/AuthContext';
 import '../styles/pages/SolicitarPaseo.css';
+import { mostrarAlerta } from '../utils/alerts';
+registerLocale('es', es);
 
 function SolicitarPaseo() {
   const { user: usuario, loading } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(true);
   const [mascotas, setMascotas] = useState([]);
   const [mascotasSeleccionadas, setMascotasSeleccionadas] = useState([]);
+  const [selectedWalker, setSelectedWalker] = useState(undefined)
   const [tipoServicio, setTipoServicio] = useState('1h');
   const [fecha, setFecha] = useState(new Date());
   const [hora, setHora] = useState('15:00');
   const [puntoEncuentro, setPuntoEncuentro] = useState('');
+  const [observacion, setObservacion] = useState('');
   const [cargandoMascotas, setCargandoMascotas] = useState(false);
+  const {walkers, loadWalkers} = useWalkers()
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -71,7 +77,7 @@ function SolicitarPaseo() {
   const total = (tipoServicio === '1h' ? PRECIOS.PASEO_1H : PRECIOS.PASEO_30MIN) * cantidad;
   const mascotasObjs = mascotas.filter(m => mascotasSeleccionadas.includes(m.idPerro));
 
-  const handleConfirmar = () => {
+  const handleConfirmar = async () => {
     if (cantidad === 0) {
       mostrarAlerta('Atención', 'Selecciona al menos una mascota', 'warning');
       return;
@@ -80,27 +86,24 @@ function SolicitarPaseo() {
       mostrarAlerta('Atención', 'El punto de encuentro es obligatorio', 'warning');
       return;
     }
-    const fechaISO = fecha.toISOString().split('T')[0];
-    const nuevaSolicitud = {
-      id: Date.now(),
-      idDueño: usuario.idUsuario,
-      mascotas: mascotasObjs,
-      tipoServicio,
-      fecha: fechaISO,
-      hora,
-      fechaHora: new Date(`${fechaISO}T${hora}`).toISOString(),
-      puntoEncuentro: puntoEncuentro.trim(),
-      precioTotal: total,
-      estado: ESTADOS_SOLICITUD.PENDIENTE,
-      fechaCreacion: new Date().toISOString(),
-      nombreMascota: mascotasObjs.map(m => m.nombre).join(', '),
-    };
-    saveSolicitud(nuevaSolicitud);
-    mostrarAlerta('Éxito', 'Solicitud enviada con éxito', 'success');
-    navigate('/dashboard');
+
+    try {
+      await solicitudApi.createSolicitud(usuario.idUsuario, {
+        horaSugerida: hora,
+        idPaseador: selectedWalker,
+        observaciones: observacion,
+        perros: mascotasSeleccionadas,
+        puntoEncuentro: puntoEncuentro.trim()
+      })
+      mostrarAlerta('Éxito', 'Solicitud enviada con éxito', 'success');
+      navigate('/dashboard');
+    } catch (error) {
+      console.log(error);
+      
+    }
   };
 
-  if (loading || cargandoMascotas) return <div>Cargando...</div>;
+  if (loading || cargandoMascotas) return <Loader/>;
   if (!usuario) return null;
 
   return (
@@ -144,9 +147,33 @@ function SolicitarPaseo() {
               <button className="btn-link" onClick={() => navigate('/configuracion')}>+ Agregar otra mascota</button>
             </div>
 
-            {/* 2. Tipo de servicio */}
+            {loadWalkers && <Loader/>}
+            {!loadWalkers && (
+              <div className="form-section">
+                <h3>2. Selecciona al paseador que desees</h3>
+                <div className="mascotas-grid">
+                  {walkers.length > 0 ? (
+                    walkers.map(w => (
+                      <div key={w.idUsuario} className={`mascota-card ${selectedWalker === w.idUsuario ? 'selected' : ''}`} onClick={() => setSelectedWalker(w.idUsuario)}>
+                        <div className="mascota-check"><input type="checkbox" checked={selectedWalker === w.idUsuario} readOnly /></div>
+                        <div className="mascota-info">
+                          <div className="mascota-nombre">{w.primerNombre}</div>
+                          <div className="mascota-raza"><RatingStars rating={w.reputacion}/></div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No hay paseadores disponibles en este momento.</p>
+                  )}
+                </div>
+                <button className="btn-link" onClick={() => navigate('/configuracion')}>+ Agregar otra mascota</button>
+              </div>
+            )}
+
+
+            {/* 3. Tipo de servicio */}
             <div className="form-section">
-              <h3>2. Tipo de servicio</h3>
+              <h3>3. Tipo de servicio</h3>
               <div className="servicios-grid">
                 <div className={`servicio-card ${tipoServicio === '1h' ? 'selected' : ''}`} onClick={() => setTipoServicio('1h')}>
                   <div className="servicio-radio"><input type="radio" name="servicio" checked={tipoServicio === '1h'} readOnly /></div>
@@ -163,9 +190,9 @@ function SolicitarPaseo() {
               </div>
             </div>
 
-            {/* 3. Fecha y hora */}
+            {/* 4. Fecha y hora */}
             <div className="form-section">
-              <h3>3. Fecha y hora</h3>
+              <h3>4. Fecha y hora</h3>
               <div className="datetime-group">
                 <div className="input-group">
                   <FaCalendarAlt className="input-icon" />
@@ -186,9 +213,9 @@ function SolicitarPaseo() {
               <div className="disponibilidad">Disponible hoy desde las 2:00 PM hasta las 8:00 PM</div>
             </div>
 
-            {/* 4. Punto de encuentro */}
+            {/* 5. Punto de encuentro */}
             <div className="form-section">
-              <h3>4. Punto de encuentro</h3>
+              <h3>5. Punto de encuentro</h3>
               <div className="input-group">
                 <FaMapMarkerAlt className="input-icon" />
                 <input
@@ -199,6 +226,19 @@ function SolicitarPaseo() {
                 />
               </div>
               <p className="ayuda-texto">Puedes modificar el punto de encuentro si lo deseas.</p>
+            </div>
+
+            {/* 6. Punto de encuentro */}
+            <div className="form-section">
+              <h3>6. Observaciones</h3>
+              <div className="input-group">
+                <BiInfoCircle className="input-icon" />
+                <textarea
+                  value={observacion}
+                  onChange={(e) => setObservacion(e.target.value)}
+                  placeholder="Cualquier cosilla..."
+                />
+              </div>
             </div>
 
             <button className="btn-confirmar" onClick={handleConfirmar}><FaPaw /> Confirmar solicitud</button>
