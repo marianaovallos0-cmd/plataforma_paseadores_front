@@ -6,11 +6,14 @@ import { mostrarAlerta } from '../../utils/alerts';
 import '../../styles/pages/RegistroPaseador.css';
 
 function RegistroPaseadorPaso1() {
-  const [nombreCompleto, setNombreCompleto] = useState('');
+  const [primerNombre, setPrimerNombre] = useState('');
+  const [segundoNombre, setSegundoNombre] = useState('');
+  const [primerApellido, setPrimerApellido] = useState('');
+  const [segundoApellido, setSegundoApellido] = useState('');
   const [correo, setCorreo] = useState('');
+  const [telefono, setTelefono] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [telefono, setTelefono] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -18,17 +21,28 @@ function RegistroPaseadorPaso1() {
     e.preventDefault();
     setError('');
 
-    if (!validarNombre(nombreCompleto)) {
-      setError(getErrorMessage('nombre'));
+    if (!validarNombre(primerNombre)) {
+      setError('Primer nombre: solo letras, mínimo 3 caracteres');
+      return;
+    }
+    if (!validarNombre(primerApellido)) {
+      setError('Primer apellido: solo letras, mínimo 3 caracteres');
+      return;
+    }
+    if (segundoNombre && !validarNombre(segundoNombre)) {
+      setError('Segundo nombre: solo letras, mínimo 3 caracteres');
+      return;
+    }
+    if (segundoApellido && !validarNombre(segundoApellido)) {
+      setError('Segundo apellido: solo letras, mínimo 3 caracteres');
       return;
     }
     if (!validarEmail(correo)) {
       setError(getErrorMessage('email'));
       return;
     }
-    const paseadores = getPaseadores();
-    if (paseadores.some(p => p.correo === correo.trim())) {
-      mostrarAlerta('Error', 'Este correo ya está registrado como paseador', 'error');
+    if (!validarTelefono(telefono)) {
+      setError(getErrorMessage('telefono'));
       return;
     }
     if (!validarPassword(password)) {
@@ -39,17 +53,15 @@ function RegistroPaseadorPaso1() {
       setError('Las contraseñas no coinciden');
       return;
     }
-    if (!validarTelefono(telefono)) {
-      setError(getErrorMessage('telefono'));
-      return;
-    }
 
-    // Guardar temporalmente (se borrará al finalizar)
     const tempData = {
-      nombreCompleto: nombreCompleto.trim(),
+      primerNombre: primerNombre.trim(),
+      segundoNombre: segundoNombre.trim(),
+      primerApellido: primerApellido.trim(),
+      segundoApellido: segundoApellido.trim(),
       correo: correo.trim(),
-      password, // solo temporal, se borrará
       telefono: telefono.trim(),
+      password,
     };
     localStorage.setItem('tempRegistroPaseador', JSON.stringify(tempData));
     navigate('/registro-paseador/paso2');
@@ -61,11 +73,14 @@ function RegistroPaseadorPaso1() {
         <h2>REGISTRO PASEADOR</h2>
         <div className="profile-placeholder"><div className="profile-circle">🐕‍🦺</div></div>
         <form onSubmit={handleSubmit}>
-          <input type="text" maxLength="100" placeholder="Nombre Completo" value={nombreCompleto} onChange={e => setNombreCompleto(e.target.value)} />
-          <input type="email" maxLength="100" placeholder="Correo electrónico" value={correo} onChange={e => setCorreo(e.target.value)} />
-          <input type="password" maxLength="50" placeholder="Contraseña (mínimo 6 caracteres)" value={password} onChange={e => setPassword(e.target.value)} />
-          <input type="password" maxLength="50" placeholder="Confirmar Contraseña" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-          <input type="tel" maxLength="10" placeholder="Teléfono (10 dígitos)" value={telefono} onChange={e => setTelefono(e.target.value)} />
+          <input type="text" maxLength="50" placeholder="Primer nombre *" value={primerNombre} onChange={e => setPrimerNombre(e.target.value)} />
+          <input type="text" maxLength="50" placeholder="Segundo nombre (opcional)" value={segundoNombre} onChange={e => setSegundoNombre(e.target.value)} />
+          <input type="text" maxLength="50" placeholder="Primer apellido *" value={primerApellido} onChange={e => setPrimerApellido(e.target.value)} />
+          <input type="text" maxLength="50" placeholder="Segundo apellido (opcional)" value={segundoApellido} onChange={e => setSegundoApellido(e.target.value)} />
+          <input type="email" maxLength="100" placeholder="Correo electrónico *" value={correo} onChange={e => setCorreo(e.target.value)} />
+          <input type="tel" maxLength="10" placeholder="Teléfono (10 dígitos) *" value={telefono} onChange={e => setTelefono(e.target.value)} />
+          <input type="password" maxLength="50" placeholder="Contraseña (mínimo 6) *" value={password} onChange={e => setPassword(e.target.value)} />
+          <input type="password" maxLength="50" placeholder="Confirmar contraseña *" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
           {error && <p className="error-message">{error}</p>}
           <button type="submit" className="btn-next">Siguiente</button>
         </form>

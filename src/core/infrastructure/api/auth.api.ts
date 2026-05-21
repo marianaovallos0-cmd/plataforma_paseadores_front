@@ -31,6 +31,11 @@ class AuthApi {
       response
     );
   }
+
+  async registerWalker(payload: any) {
+    const response = await httpClient.post('/auth/paseador', payload);
+    return handleApiResponse(response);
+  }
 }
 
 export default AuthApi.getInstance()
