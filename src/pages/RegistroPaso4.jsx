@@ -46,7 +46,7 @@ function RegistroPaso4() {
       await authApi.register(payload);
       console.log('✅ Usuario registrado');
 
-      // 2. Login automático
+      // 2. Login automático para obtener el token y el idUsuario
       const loginData = await authApi.login({
         email: userData.correo,
         password: userData.password,
@@ -80,13 +80,16 @@ function RegistroPaso4() {
         console.log('✅ Mascotas creadas');
       }
 
-      // 5. Guardar sesión y redirigir
-      const sesion = { ...loginData.usuario, roles: loginData.usuario.roles, rol: ROLES.DUENO };
-      localStorage.setItem('sesionActual', JSON.stringify(sesion));
+      // Limpiar datos temporales
       localStorage.removeItem('tempRegistro');
-
-      mostrarAlerta('Registro exitoso', 'Cuenta creada. Redirigiendo al dashboard.', 'success');
-      navigate('/dashboard');
+      
+      // Mostrar mensaje y redirigir al login (sin guardar sesión automática)
+      mostrarAlerta(
+        'Registro exitoso',
+        'Cuenta creada correctamente. Ahora inicia sesión con tu correo y contraseña.',
+        'success'
+      );
+      navigate('/');
     } catch (err) {
       console.error('❌ Error:', err);
       let errorMessage = 'Error al registrar usuario';
@@ -109,7 +112,7 @@ function RegistroPaso4() {
   return (
     <div className="registro-container">
       <div className="registro-card">
-        <h2>CONFIRMAR</h2>
+        <h2>CONFIRMAR REGISTRO</h2>
         <div className="profile-placeholder">
           <div className="profile-circle">✅</div>
         </div>

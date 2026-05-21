@@ -47,8 +47,14 @@ function Login() {
       else if (userRol === ROLES.PASEADOR) navigate('/dashboard-paseador');
       else navigate('/');
     } catch (error) {
-      const errorCustom = error;
-      setError(errorCustom.message);
+      console.error(error);
+      let mensaje = 'Error al iniciar sesión';
+      if (error.response?.status === 401) {
+        mensaje = 'Correo o contraseña incorrectos. Si no estás registrado, crea una cuenta.';
+      } else if (error.message) {
+        mensaje = error.message;
+      }
+      setError(mensaje);
     } finally {
       setLoading(false);
     }

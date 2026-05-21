@@ -30,7 +30,7 @@ function SolicitarPaseo() {
   const [puntoEncuentro, setPuntoEncuentro] = useState('');
   const [observacion, setObservacion] = useState('');
   const [cargandoMascotas, setCargandoMascotas] = useState(false);
-  const {walkers, loadWalkers} = useWalkers()
+  const { walkers, loadWalkers, refreshWalkers } = useWalkers();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -150,7 +150,17 @@ function SolicitarPaseo() {
             {loadWalkers && <Loader/>}
             {!loadWalkers && (
               <div className="form-section">
-                <h3>2. Selecciona al paseador que desees</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3>2. Selecciona al paseador que desees</h3>
+                  <button 
+                    className="btn-refresh-ranking" 
+                    onClick={refreshWalkers} 
+                    disabled={loadWalkers}
+                    style={{ background: '#5B3A8E', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '20px', cursor: 'pointer', fontSize: '12px' }}
+                  >
+                    Actualizar ranking
+                  </button>
+                </div>
                 <div className="mascotas-grid">
                   {walkers.length > 0 ? (
                     walkers.map(w => (

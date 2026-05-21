@@ -1,99 +1,71 @@
 import Loader from '@/components/Loader';
+import { RatingStars } from '@/components/RatingStars';
 import { useEffect, useState } from 'react';
-import { FaBars, FaChevronRight, FaRegStar, FaSearch, FaStar, FaUserCircle } from 'react-icons/fa';
+import { FaBars, FaChevronRight, FaSearch, FaUserCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import MenuLateral from '../components/MenuLateral';
 import ModalCalificarGenerico from '../components/ModalCalificarGenerico';
-import { ESTADOS_SOLICITUD } from '../constants';
 import { useAuth } from '../context/AuthContext';
-import { getCalificaciones, getSolicitudes, saveCalificacion } from '../services/api';
-import '../styles/pages/MiHistorial.css';
+import { useWalksByOwner } from '@/hooks/useWalksByOwner';
+import calificacionApi from '@/core/infrastructure/api/calificacion.api';
 import { mostrarAlerta } from '../utils/alerts';
+import '../styles/pages/MiHistorial.css';
 
 function MiHistorial() {
-  const { user: usuario, loading } = useAuth();
+  const { user: usuario, loading: authLoading } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(true);
-  const [historial, setHistorial] = useState([]);
   const [filtroFecha, setFiltroFecha] = useState('todo');
   const [busqueda, setBusqueda] = useState('');
-  const [modalCalif, setModalCalif] = useState({ isOpen: false, solicitudId: null, paseadorNombre: '' });
+  const [modalCalif, setModalCalif] = useState({ isOpen: false, walkId: null, paseadorId: null });
   const navigate = useNavigate();
 
-  const cargarHistorial = () => {
-    if (!usuario) return;
-    const solicitudes = getSolicitudes();
-    const calificaciones = getCalificaciones();
-    // Solo mostrar las solicitudes que están FINALIZADAS (o ACEPTADAS para pruebas)
-    const paseos = solicitudes
-      .filter(s => s.idDueño === usuario.idUsuario && s.estado === ESTADOS_SOLICITUD.FINALIZADA)
-      .map(s => {
-        const miCalif = calificaciones.find(c => c.solicitudId === s.id && c.tipo === 'dueño');
-        return {
-          id: s.id,
-          fecha: new Date(s.fecha),
-          fechaStr: new Date(s.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
-          mascota: s.nombreMascota || (s.mascotas ? s.mascotas.map(m => m.nombre).join(', ') : 'Mascota'),
-          paseador: 'Paseador asignado', // en simulación no tenemos nombre real
-          calificacion: miCalif ? miCalif.puntaje : null,
-          yaCalificado: !!miCalif,
-          estado: s.estado,
-        };
-      })
-      .sort((a, b) => b.fecha - a.fecha);
-    setHistorial(paseos);
-  };
+  const { walks, loading: walksLoading, refetchWalks } = useWalksByOwner(usuario?.idUsuario);
 
-  useEffect(() => {
-    if (!loading && usuario) {
-      cargarHistorial();
-    }
-  }, [usuario, loading]);
+  // Filtrar solo los finalizados
+  const paseosFinalizados = walks.filter(w => w.estado === 'FINALIZADO');
 
+  // Filtros adicionales (fecha y búsqueda)
   const filtrarPorFecha = (paseo) => {
+    const fecha = new Date(paseo.fechaInicio);
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const inicioSemana = new Date(hoy); inicioSemana.setDate(hoy.getDate() - hoy.getDay());
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     switch (filtroFecha) {
-      case 'hoy': return paseo.fecha >= hoy;
-      case 'semana': return paseo.fecha >= inicioSemana;
-      case 'mes': return paseo.fecha >= inicioMes;
+      case 'hoy': return fecha >= hoy;
+      case 'semana': return fecha >= inicioSemana;
+      case 'mes': return fecha >= inicioMes;
       default: return true;
     }
   };
 
-  const filtrarPorBusqueda = (paseo) => !busqueda || paseo.mascota.toLowerCase().includes(busqueda.toLowerCase());
+  const filtrarPorBusqueda = (paseo) => !busqueda || paseo.observaciones?.toLowerCase().includes(busqueda.toLowerCase());
 
-  const paseosFiltrados = historial.filter(p => filtrarPorFecha(p) && filtrarPorBusqueda(p));
+  const paseosFiltrados = paseosFinalizados.filter(p => filtrarPorFecha(p) && filtrarPorBusqueda(p));
 
-  const renderStars = (rating) => {
-    if (rating === null) return null;
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(i <= rating ? <FaStar key={i} className="star filled" /> : <FaRegStar key={i} className="star empty" />);
+  const handleCalificar = (walkId, paseadorId) => {
+    setModalCalif({ isOpen: true, walkId, paseadorId });
+  };
+
+  const guardarCalificacion = async (puntaje, comentario) => {
+    try {
+      await calificacionApi.calificarPaseo(usuario.idUsuario, modalCalif.walkId, { puntaje, comentario });
+      mostrarAlerta('Calificación guardada', 'Gracias por calificar el paseo', 'success');
+      setModalCalif({ isOpen: false, walkId: null, paseadorId: null });
+      await refetchWalks(); // Refresca la lista para que calificado sea true
+    } catch (error) {
+      let mensaje = 'No se pudo guardar la calificación';
+      if (error?.response?.data?.error?.message) {
+        mensaje = error.response.data.error.message;
+      } else if (error?.message) {
+        mensaje = error.message;
+      }
+      mostrarAlerta('Error', mensaje, 'error');
+      setModalCalif({ isOpen: false, walkId: null, paseadorId: null });
     }
-    return stars;
-  };
-
-  const handleCalificar = (solicitudId, paseadorNombre) => {
-    setModalCalif({ isOpen: true, solicitudId, paseadorNombre });
-  };
-
-  const guardarCalificacion = (solicitudId, puntaje, comentario) => {
-    const nuevaCalif = {
-      id: Date.now(),
-      solicitudId,
-      tipo: 'dueño',
-      puntaje,
-      comentario,
-      fecha: new Date().toISOString()
-    };
-    saveCalificacion(nuevaCalif);
-    cargarHistorial(); // refrescar la lista
-    mostrarAlerta('Calificación guardada', 'Gracias por calificar el paseo', 'success');
   };
 
   const toggleMenu = () => setMenuAbierto(!menuAbierto);
-  if (loading) return <Loader/>;
+  if (authLoading || walksLoading) return <Loader/>;
   if (!usuario) return null;
 
   return (
@@ -113,7 +85,7 @@ function MiHistorial() {
           <div className="historial-filtros">
             <div className="search-box">
               <FaSearch className="search-icon" />
-              <input type="text" placeholder="Buscar por mascota..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+              <input type="text" placeholder="Buscar por observaciones..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
             </div>
             <div className="filtros-fecha">
               <button className={filtroFecha === 'hoy' ? 'active' : ''} onClick={() => setFiltroFecha('hoy')}>Hoy</button>
@@ -127,19 +99,23 @@ function MiHistorial() {
               <div className="sin-paseos">No hay paseos finalizados en este período</div>
             ) : (
               paseosFiltrados.map(paseo => (
-                <div key={paseo.id} className="historial-card">
+                <div key={paseo.idPaseo} className="historial-card">
                   <div className="card-foto"><div className="foto-perro">🐕</div></div>
                   <div className="card-info">
-                    <h3>{paseo.mascota}</h3>
-                    <p className="paseador">{paseo.paseador}</p>
+                    <h3>Paseo #{paseo.idPaseo}</h3>
+                    <p className="paseador">Paseador ID: {paseo.idPaseador}</p>
                     <div className="estrellas">
-                      {paseo.calificacion ? renderStars(paseo.calificacion) : (!paseo.yaCalificado ?
-                        <button className="btn-calificar" onClick={() => handleCalificar(paseo.id, paseo.paseador)}>Calificar</button> :
-                        <span className="sin-calif">No calificado</span>)}
+                      {paseo.calificado ? (
+                        <span className="ya-calificado">✅ Ya calificado</span>
+                      ) : (
+                        <button className="btn-calificar" onClick={() => handleCalificar(paseo.idPaseo, paseo.idPaseador)}>
+                          Calificar
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="card-fecha">
-                    <span>{paseo.fechaStr}</span>
+                    <span>{new Date(paseo.fechaInicio).toLocaleDateString('es-ES')}</span>
                     <FaChevronRight className="detalle-icon" onClick={() => mostrarAlerta('Próximamente', 'Detalle del paseo disponible pronto', 'info')} />
                   </div>
                 </div>
@@ -150,10 +126,10 @@ function MiHistorial() {
       </div>
       <ModalCalificarGenerico
         isOpen={modalCalif.isOpen}
-        onClose={() => setModalCalif({ isOpen: false, solicitudId: null, paseadorNombre: '' })}
+        onClose={() => setModalCalif({ isOpen: false, walkId: null, paseadorId: null })}
         titulo="Calificar paseo"
-        nombreCalificado={modalCalif.paseadorNombre}
-        onCalificar={(puntaje, comentario) => guardarCalificacion(modalCalif.solicitudId, puntaje, comentario)}
+        nombreCalificado={`Paseador #${modalCalif.paseadorId}`}
+        onCalificar={guardarCalificacion}
       />
     </div>
   );

@@ -1,5 +1,4 @@
 import { httpClient } from '../http/httpClient';
-import { handleApiResponse } from './api.handler';
 
 export interface CreateCalificacionPayload {
   puntaje: number;
@@ -19,7 +18,7 @@ class CalificacionApi {
     const response = await httpClient.post(`/owners/${ownerId}/walks/${walkId}/ratings`, data, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    return handleApiResponse<any>(response);
+    return response;
   }
 }
 

@@ -46,6 +46,7 @@ export const useWalksByWalker = (walkerId: number) => {
     walks,
     loadWalks,
     errorWalks,
-    endWalk
+    endWalk,
+    fetchWalksByWalker
   }
 }

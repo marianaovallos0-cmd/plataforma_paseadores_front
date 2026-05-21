@@ -25,7 +25,8 @@ function DashboardPaseador() {
     inRouteWalks, 
     finalizedWalks, 
     loadWalks, 
-    endWalk
+    endWalk,
+    fetchWalksByWalker
   } = useWalksByWalker(paseador.idUsuario)
 
   const navigate = useNavigate();
@@ -63,6 +64,8 @@ function DashboardPaseador() {
     const confirmed = await confirmarAccion('Aceptar solicitud', '¿Aceptar este paseo?');
     if (confirmed) {
       await acceptRequest(id);
+      await fetchWalksByWalker();
+      console.log('Después de fetchWalksByWalker');
       mostrarAlerta('Aceptada', 'Solicitud aceptada', 'success');
     }
   };

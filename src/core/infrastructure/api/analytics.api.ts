@@ -11,10 +11,15 @@ class AnalyticsService {
     return AnalyticsService.instance;
   }
 
-  async getWalkersRanking () {
-    const response = await httpClient.get('/rankings/walkers')
+  async getWalkersRanking() {
+    const response = await httpClient.get('/rankings/walkers');
     return handleApiResponse<WalkersRanking[]>(response);
+  }
+
+  async refreshWalkersRanking() {
+    const response = await httpClient.post('/rankings/walkers/refresh');
+    return response;
   }
 }
 
-export default AnalyticsService.getInstance()
+export default AnalyticsService.getInstance();

@@ -5,8 +5,6 @@ import MenuLateral from '../components/MenuLateral';
 import ModalAgregarMascota from '../components/Configuracion/ModalAgregarMascota';
 import ModalListaMascotas from '../components/Configuracion/ModalListaMascotas';
 import ModalDetalleMascota from '../components/Configuracion/ModalDetalleMascota';
-import ModalAgregarTarjeta from '../components/Configuracion/ModalAgregarTarjeta';
-import ModalListaTarjetas from '../components/Configuracion/ModalListaTarjetas';
 import ModalEditarPerfil from '../components/Configuracion/ModalEditarPerfil';
 import { useAuth } from '../context/AuthContext';
 import petApi from '@/core/infrastructure/api/pet.api';
@@ -23,9 +21,6 @@ function Configuracion() {
   const [modalListaMascotas, setModalListaMascotas] = useState(false);
   const [modalDetalleMascota, setModalDetalleMascota] = useState(false);
   const [mascotaSeleccionada, setMascotaSeleccionada] = useState(null);
-  const [metodosPago, setMetodosPago] = useState([]);
-  const [modalAgregarTarjeta, setModalAgregarTarjeta] = useState(false);
-  const [modalListaTarjetas, setModalListaTarjetas] = useState(false);
   const [modalEditarPerfil, setModalEditarPerfil] = useState(false);
   const navigate = useNavigate();
 
@@ -36,7 +31,6 @@ function Configuracion() {
       return;
     }
     setUsuario(authUser);
-    // Cargar mascotas del dueño (sin userApi)
     const cargarMascotas = async () => {
       try {
         const mascotas = await petApi.getPetsByOwner(authUser.idUsuario);
@@ -52,7 +46,7 @@ function Configuracion() {
 
   const handleGuardarPerfil = (usuarioActualizado) => {
     setUsuario(usuarioActualizado);
-    login(usuarioActualizado); // actualizar contexto
+    login(usuarioActualizado);
     mostrarAlerta('Perfil actualizado', 'Los cambios se han guardado', 'success');
   };
 
@@ -104,10 +98,14 @@ function Configuracion() {
   const handleOpcionesMascotas = () => setModalListaMascotas(true);
   const handleAgregarMascota = () => setModalAgregarMascota(true);
 
-  // ========== MÉTODOS DE PAGO (placeholder) ==========
-  const handleAgregarTarjeta = () => setModalAgregarTarjeta(true);
-  const agregarTarjetaNueva = () => mostrarAlerta('Próximamente', 'Métodos de pago próximamente', 'info');
-  const handleOpcionesTarjetas = () => setModalListaTarjetas(true);
+  // ========== MÉTODOS DE PAGO (próximamente) ==========
+  const handleAgregarTarjeta = () => {
+    mostrarAlerta('Próximamente', 'Los métodos de pago estarán disponibles pronto', 'info');
+  };
+
+  const handleOpcionesPago = () => {
+    mostrarAlerta('Próximamente', 'Gestión de métodos de pago próximamente', 'info');
+  };
 
   // ========== NOTIFICACIONES ==========
   const handleToggleNotificaciones = () => {
@@ -122,7 +120,7 @@ function Configuracion() {
 
   const handleOpciones = (seccion) => {
     if (seccion === 'Mascotas') handleOpcionesMascotas();
-    else if (seccion === 'Métodos de pago') handleOpcionesTarjetas();
+    else if (seccion === 'Métodos de pago') handleOpcionesPago();
     else if (seccion === 'Seguridad') mostrarAlerta('Próximamente', 'Más opciones de seguridad', 'info');
   };
 
@@ -199,8 +197,6 @@ function Configuracion() {
       <ModalAgregarMascota isOpen={modalAgregarMascota} onClose={() => setModalAgregarMascota(false)} onAgregar={agregarMascotaNueva} />
       <ModalListaMascotas isOpen={modalListaMascotas} onClose={() => setModalListaMascotas(false)} mascotas={usuario.mascotas || []} onActualizar={handleActualizarMascota} onEliminar={handleEliminarMascota} />
       <ModalDetalleMascota isOpen={modalDetalleMascota} onClose={() => setModalDetalleMascota(false)} mascota={mascotaSeleccionada} />
-      <ModalAgregarTarjeta isOpen={modalAgregarTarjeta} onClose={() => setModalAgregarTarjeta(false)} onAgregar={agregarTarjetaNueva} />
-      <ModalListaTarjetas isOpen={modalListaTarjetas} onClose={() => setModalListaTarjetas(false)} tarjetas={metodosPago} onActualizar={() => {}} onEliminar={() => {}} />
       <ModalEditarPerfil isOpen={modalEditarPerfil} onClose={() => setModalEditarPerfil(false)} usuario={usuario} onGuardar={handleGuardarPerfil} />
     </div>
   );
